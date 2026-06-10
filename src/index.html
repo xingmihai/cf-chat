@@ -162,7 +162,9 @@ async function load(){
    html += '<div class="msg '+meClass+'">' +
      '<img src="https://q.qlogo.cn/headimg_dl?dst_uin='+m.qq+'&spec=100" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>\'">' +
      '<div class="bubble"><div class="nm">'+esc(m.nickname)+'</div>'+esc(m.content)+
-     '<div class="time">'+formatTime(m.time)+'</div></div>' +
+     '<div class="time">'+formatTime(m.time)+
+     (_isAdmin?' <span class="del-btn" onclick="delMsg('+m.id+')">🗑️</span>':'')+
+     '</div></div>' +
      '</div>';
  }
  $('#box').innerHTML=html;
