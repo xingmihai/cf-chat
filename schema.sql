@@ -23,3 +23,12 @@ CREATE TABLE IF NOT EXISTS online_users (
 CREATE TABLE IF NOT EXISTS admins (
   qq TEXT PRIMARY KEY
 );
+
+CREATE TABLE IF NOT EXISTS announcements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  content TEXT NOT NULL DEFAULT '',
+  updated_at INTEGER DEFAULT (unixepoch())
+);
+
+-- 插入一条初始公告
+INSERT OR IGNORE INTO announcements(id,content) VALUES(1,'欢迎来到QQ群聊！');
