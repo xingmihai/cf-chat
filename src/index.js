@@ -78,6 +78,13 @@ export default {
       return new Response(JSON.stringify({count: result.count}),{headers:cors});
     }
 
+        // 检查是否是管理员
+    if (url.pathname === '/api/checkadmin' && request.method === 'POST') {
+      const { qq } = await request.json();
+      const admin = await db.prepare('SELECT qq FROM admins WHERE qq=?').bind(qq).first();
+      return new Response(JSON.stringify({admin: !!admin}),{headers:cors});
+    }
+
         // 删除消息（仅管理员）
     if (url.pathname === '/api/delmsg' && request.method === 'POST') {
       const { qq, msgId } = await request.json();
