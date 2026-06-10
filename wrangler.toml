@@ -10,4 +10,4 @@ rules = [
 [[d1_databases]]
 binding = "DB"
 database_name = "chat-db"
-database_id = "9683bf63-d0dd-4efd-9dbd-07e3a5317cc2"
+database_id = "1c2e4bf4-9c61-4065-9c26-b3dc9a70040d"
