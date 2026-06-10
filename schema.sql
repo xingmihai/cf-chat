@@ -11,4 +11,8 @@ CREATE TABLE IF NOT EXISTS messages (
   content TEXT NOT NULL,
   time INTEGER DEFAULT (unixepoch())
 );
+CREATE TABLE IF NOT EXISTS online_users (
+  qq TEXT PRIMARY KEY,
+  last_seen INTEGER NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_msg_time ON messages(time DESC);
