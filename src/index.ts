@@ -20,7 +20,7 @@ export default {
       return new Response(JSON.stringify({ err: msg }), { headers: cors });
     }
 
-// 发送验证码
+//  发送验证码
 if (url.pathname === '/api/sendcode' && request.method === 'POST') {
   const { email } = await request.json();
   if (!/^[a-z0-9._%+\-]+@qq\.com$/i.test(email)) {
