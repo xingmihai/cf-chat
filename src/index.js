@@ -56,7 +56,7 @@ export default {
     // 拉消息
     if (url.pathname === '/api/messages') {
       const msgs = await db.prepare(
-        'SELECT * FROM messages ORDER BY id DESC LIMIT 50'
+        'SELECT * FROM messages ORDER BY id DESC LIMIT 58'
       ).all();
       return new Response(JSON.stringify(msgs.results.reverse()),{headers:cors});
     }
@@ -72,26 +72,41 @@ export default {
 
     // 在线人数
     if (url.pathname === '/api/online') {
-      const cutoff = Math.floor(Date.now() / 1000) - 85;
+      const cutoff = Math.floor(Date.now() / 1000) - 96;
       await db.prepare('DELETE FROM online_users WHERE last_seen < ?').bind(cutoff).run();
       const result = await db.prepare('SELECT COUNT(*) as count FROM online_users').first();
       return new Response(JSON.stringify({count: result.count}),{headers:cors});
     }
 
-        // 检查是否是管理员
+    // 获取公告
+    if (url.pathname === '/api/announcement') {
+      const ann = await db.prepare('SELECT content FROM announcements WHERE id=1').first();
+      return new Response(JSON.stringify({content: ann ? ann.content : ''}),{headers:cors});
+    }
+
+    // 修改公告（仅管理员）
+    if (url.pathname === '/api/setannouncement' && request.method === 'POST') {
+      const { qq, content } = await request.json();
+      const admin = await db.prepare('SELECT qq FROM admins WHERE qq=?').bind(qq).first();
+      if (!admin) return new Response(JSON.stringify({err:'你不是管理员'}),{headers:cors});
+      const now = Math.floor(Date.now() / 1000);
+      await db.prepare('UPDATE announcements SET content=?, updated_at=? WHERE id=1')
+        .bind(content.trim().slice(0,500), now).run();
+      return new Response(JSON.stringify({ok:true}),{headers:cors});
+    }
+
+    // 检查是否是管理员
     if (url.pathname === '/api/checkadmin' && request.method === 'POST') {
       const { qq } = await request.json();
       const admin = await db.prepare('SELECT qq FROM admins WHERE qq=?').bind(qq).first();
       return new Response(JSON.stringify({admin: !!admin}),{headers:cors});
     }
 
-        // 删除消息（仅管理员）
+    // 删除消息（仅管理员）
     if (url.pathname === '/api/delmsg' && request.method === 'POST') {
       const { qq, msgId } = await request.json();
-      // 检查是否是管理员
       const admin = await db.prepare('SELECT qq FROM admins WHERE qq=?').bind(qq).first();
       if (!admin) return new Response(JSON.stringify({err:'你不是管理员'}),{headers:cors});
-      // 删除消息
       await db.prepare('DELETE FROM messages WHERE id=?').bind(msgId).run();
       return new Response(JSON.stringify({ok:true}),{headers:cors});
     }
