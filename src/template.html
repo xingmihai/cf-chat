@@ -23,6 +23,9 @@ button.secondary{background:#999}
 .msg .meta{font-size:11px;color:#999}
 .msg .del{color:#e74c3c;cursor:pointer;font-size:12px;margin-left:8px;opacity:0.7}
 .msg .del:hover{opacity:1}
+.msg.self{flex-direction:row-reverse}
+.msg.self .body{text-align:right}
+.msg.self .meta{text-align:right}
 #input-bar{display:flex;gap:6px;padding:8px 12px;border-top:1px solid #ddd;background:#fff}
 #input-bar input{flex:1;padding:8px;border:1px solid #ddd;border-radius:4px}
 #input-bar input:focus{outline:none;border-color:#4f6ef7}
@@ -153,19 +156,22 @@ async function loadMsgs() {
     const msgs = await api('/api/msgs');
     const chatEl = $('chat');
     
-    chatEl.innerHTML = msgs.map(m => `
-      <div class="msg">
-        <img src="${m.avatar || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22%3E%3Crect fill=%22%23ddd%22 width=%2236%22 height=%2236%22/%3E%3Ctext x=%2218%22 y=%2224%22 text-anchor=%22middle%22 font-size=%2216%22 fill=%22%23999%22%3E?%3C/text%3E%3C/svg%3E'}" alt="头像">
-        <div class="body">
-          <div>
-            <strong>${escapeHtml(m.nickname)}</strong>
-            <span class="meta">${m.created_at}</span>
-            ${me.is_admin ? `<span class="del" onclick="deleteMsg(${m.id})">🗑 删除</span>` : ''}
+    chatEl.innerHTML = msgs.map(m => {
+      const isSelf = me.id && m.user_id === me.id;
+      return `
+        <div class="msg${isSelf ? ' self' : ''}">
+          <img src="${m.avatar || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22%3E%3Crect fill=%22%23ddd%22 width=%2236%22 height=%2236%22/%3E%3Ctext x=%2218%22 y=%2224%22 text-anchor=%22middle%22 font-size=%2216%22 fill=%22%23999%22%3E?%3C/text%3E%3C/svg%3E'}" alt="头像">
+          <div class="body">
+            <div>
+              <strong>${escapeHtml(m.nickname)}</strong>
+              <span class="meta">${m.created_at}</span>
+              ${me.is_admin ? `<span class="del" onclick="deleteMsg(${m.id})">🗑 删除</span>` : ''}
+            </div>
+            <div>${escapeHtml(m.content)}</div>
           </div>
-          <div>${escapeHtml(m.content)}</div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
     
     chatEl.scrollTop = chatEl.scrollHeight;
   } catch(e) {
