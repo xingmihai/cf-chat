@@ -9,78 +9,138 @@
 body{font-family:system-ui,sans-serif;background:#f0f2f5;display:flex;justify-content:center}
 #app{width:100%;max-width:420px;height:100vh;display:flex;flex-direction:column;background:#fff;transition:.3s}
 
-/* 顶部导航栏 */
-header{padding:10px 12px;background:#0088ff;color:#fff;font-size:15px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+/* 顶部导航 */
+header{padding:10px 12px;background:#0088ff;color:#fff;font-size:15px;display:flex;align-items:center;gap:8px}
 header img{width:34px;height:34px;border-radius:50%}
-header .info{flex:1}
-header .actions{display:flex;gap:12px}
+#onlineCount{font-size:12px;opacity:.9;margin-left:4px}
 
 /* 公告横幅 */
-#announcementBanner{
-  background:linear-gradient(135deg,#ff9a9e 0%,#fad0c4 100%);
-  color:#333;
+#topBanner{
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  color:#fff;
   padding:10px 14px;
   font-size:14px;
   text-align:center;
-  display:flex;
+  display:flex; /* 默认显示 */
   align-items:center;
   justify-content:center;
   gap:8px;
   min-height:40px;
   cursor:pointer;
-  border-bottom:1px solid #eee;
+  position:relative;
 }
-#announcementBanner:hover{background:#ffdde1;}
+#topBanner .banner-text{flex:1;word-break:break-word}
+#topBanner .edit-icon{
+  font-size:16px;
+  opacity:.8;
+  flex-shrink:0;
+  display:none; /* 默认隐藏，JS控制显示 */
+}
 
 /* 聊天区域 */
-#box{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;background:#e5ddd5;scroll-behavior:smooth}
-.msg{display:flex;gap:6px;align-items:flex-start;animation:fadeIn .2s;position:relative}
+#box{
+  flex:1;
+  overflow-y:auto;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  background:url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjA1Ii8+PC9zdmc+');
+}
+.msg{display:flex;gap:6px;align-items:flex-start;animation:fadeIn .2s}
 .msg.me{flex-direction:row-reverse}
-.msg .avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0}
-.msg .bubble{padding:6px 10px;border-radius:8px;font-size:14px;max-width:70%;word-wrap:break-word;line-height:1.4}
-.msg.me .bubble{background:#95ec69;}
-.msg.other .bubble{background:#fff;}
-.msg .time{font-size:10px;color:#999;margin-top:2px;text-align:center;width:100%;order:-1;margin-bottom:2px}
-.msg.me .time{text-align:right;}
-.msg.other .time{text-align:left;}
+.msg .avatar{width:32px;height:32px;border-radius:4px;flex-shrink:0}
+.msg .bubble{
+  max-width:70%;
+  background:#fff;
+  border:1px solid #e5e5e5;
+  border-radius:0 10px 10px 10px;
+  padding:6px 10px;
+  font-size:14px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+  position:relative;
+}
+.msg.me .bubble{
+  background:#95ec69;
+  border:1px solid #90e063;
+  border-radius:10px 0 10px 10px;
+}
+.msg .name{font-size:11px;color:#888;margin-bottom:2px}
+.msg.me .name{display:none}
+.msg .time{font-size:10px;color:#999;margin-top:2px;text-align:right}
+.msg .del-btn{
+  position:absolute;
+  top:-8px;
+  right:-8px;
+  width:20px;
+  height:20px;
+  background:#ff4d4f;
+  color:#fff;
+  border-radius:50%;
+  font-size:12px;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  border:none;
+  box-shadow:0 0 3px rgba(0,0,0,.3);
+}
+.msg .bubble:hover .del-btn{display:flex}
 
 /* 底部输入区 */
-footer{padding:10px;background:#f7f7f7;display:flex;gap:8px;border-top:1px solid #ddd;align-items:center;flex-shrink:0}
-#inputArea{display:flex;flex:1;gap:8px}
-#msg{flex:1;padding:8px 12px;border:1px solid #ddd;background:#fff;outline:none;border-radius:18px;font-size:14px;height:36px;}
-#sendBtn{background:#0088ff;color:#fff;border:none;padding:0 16px;height:36px;border-radius:18px;cursor:pointer;font-weight:500;white-space:nowrap}
+footer{padding:10px;background:#f7f7f7;border-top:1px solid #eee;display:flex;gap:8px;align-items:end}
+#inputBox{flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:20px;outline:none;font-size:14px;resize:none;max-height:80px;line-height:1.4}
+#sendBtn{background:#0088ff;color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:14px;cursor:pointer}
+#sendBtn:disabled{background:#ccc;cursor:not-allowed}
 
 /* 未登录提示 */
-.loginPrompt{text-align:center;color:#666;padding:20px;font-size:14px;background:#fff;margin:10px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-.loginPrompt a{color:#0088ff;text-decoration:none;margin:0 5px;}
-
-/* 管理员按钮 */
-.adminPanelBtn{position:fixed;bottom:80px;right:20px;width:48px;height:48px;border-radius:50%;background:#ff9800;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.3);z-index:100;display:none;}
-.adminPanelBtn.show{display:flex;}
+.notice-bar{
+  padding:15px;
+  text-align:center;
+  color:#666;
+  font-size:14px;
+  background:#fffbe6;
+  border-bottom:1px solid #ffe58f;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  align-items:center;
+}
+.login-link{
+  color:#1890ff;
+  text-decoration:none;
+  font-weight:bold;
+  cursor:pointer;
+}
+.edit-banner-input{
+  width:100%;
+  padding:6px;
+  border-radius:4px;
+  border:1px solid #ccc;
+  margin-top:5px;
+  display:none;
+}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
 <div id="app">
-  <!-- 顶部栏 -->
+  <!-- 顶部 -->
   <header>
-    <img id="myAvatar" src="https://q1.qlogo.cn/g?b=qq&nk=123456&s=640" alt="头像">
-    <div class="info">
-      <div id="myNickname">游客</div>
-      <div style="font-size:12px;opacity:0.8;">ID: <span id="myQQ">-</span></div>
-    </div>
-    <div class="actions">
-      <span id="onlineCount" style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:10px;">0人在线</span>
-      <span id="themeToggle" style="font-size:18px;cursor:pointer;">🌙</span>
-      <span id="changeName" style="cursor:pointer;">改昵称</span>
-      <span id="logout" style="cursor:pointer;">退出</span>
-    </div>
+    <img id="myAvatar" src="https://q2.qlogo.cn/headimg_dl?dst_uin=123456&spec=100" alt="头像">
+    <span id="myName">QQ群聊</span>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+      <span id="onlineCount">0人在线</span>
+      <span>🌙</span>
+      <span id="logoutBtn" style="display:none;">退出</span>
+    </span>
   </header>
 
   <!-- 公告横幅 -->
-  <div id="announcementBanner">
+  <div id="topBanner">
     <span class="banner-text">加载中...</span>
+    <span class="edit-icon">✏️</span>
   </div>
 
   <!-- 聊天框 -->
@@ -88,180 +148,221 @@ footer{padding:10px;background:#f7f7f7;display:flex;gap:8px;border-top:1px solid
 
   <!-- 底部输入 -->
   <footer>
-    <div id="inputArea">
-      <input id="msg" type="text" placeholder="请输入消息..." disabled autocomplete="off">
-      <button id="sendBtn" disabled>发送</button>
-    </div>
+    <textarea id="inputBox" placeholder="请输入消息..." rows="1"></textarea>
+    <button id="sendBtn">发送</button>
   </footer>
-
-  <!-- 管理员按钮 -->
-  <div id="adminPanelBtn" class="adminPanelBtn" title="管理面板">⚙️</div>
 </div>
 
 <script>
 const box = document.getElementById('box');
-const msgInput = document.getElementById('msg');
+const input = document.getElementById('inputBox');
 const sendBtn = document.getElementById('sendBtn');
-const myQQ = document.getElementById('myQQ');
-const myNickname = document.getElementById('myNickname');
+const myNameEl = document.getElementById('myName');
+const myAvatar = document.getElementById('myAvatar');
 const onlineCountEl = document.getElementById('onlineCount');
-const announcementBanner = document.getElementById('announcementBanner');
-const adminPanelBtn = document.getElementById('adminPanelBtn');
-const themeToggle = document.getElementById('themeToggle');
+const logoutBtn = document.getElementById('logoutBtn');
+const topBanner = document.getElementById('topBanner');
+const bannerText = topBanner.querySelector('.banner-text');
+const editIcon = topBanner.querySelector('.edit-icon');
 
-let currentUser = null; // 当前登录用户
-let isAdmin = false;    // 是否是管理员
+let me = null; // 当前登录用户 {qq, nickname, avatar}
+let isAdmin = false;
 
-// 初始化：检查是否有登录态
-async function init() {
-  const res = await fetch('/api/checklogin');
-  const data = await res.json();
-  
-  if (data.logged) {
-    currentUser = data.user;
-    isAdmin = data.isAdmin || false;
-    myQQ.innerText = currentUser.qq;
-    myNickname.innerText = currentUser.nickname || currentUser.qq;
-    document.getElementById('myAvatar').src = `https://q1.qlogo.cn/g?b=qq&nk=${currentUser.qq}&s=640`;
-    msgInput.disabled = false;
-    sendBtn.disabled = false;
-    msgInput.placeholder = "说点什么吧...";
-    
-    if(isAdmin) adminPanelBtn.classList.add('show');
-  } else {
-    // 未登录状态
-    myQQ.innerText = '-';
-    myNickname.innerText = '游客';
-    document.getElementById('myAvatar').src = 'https://q1.qlogo.cn/g?b=qq&nk=123456&s=640';
-    msgInput.disabled = true;
-    sendBtn.disabled = true;
-    msgInput.placeholder = "请登录后发送消息";
-    
-    // 显示登录提示
-    const prompt = document.createElement('div');
-    prompt.className = 'loginPrompt';
-    prompt.innerHTML = '您当前是游客，<a href="#" onclick="showLoginModal()">点击登录</a>或<a href="#" onclick="showRegisterModal()">注册</a>以发送消息。';
-    box.appendChild(prompt);
+// 自动调整输入框高度
+input.addEventListener('input', () => {
+  input.style.height = 'auto';
+  input.style.height = input.scrollHeight + 'px';
+});
+
+// 回车发送
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMsg();
   }
-  
-  loadMessages();
-  loadOnlineUsers();
-  loadAnnouncement();
-}
+});
 
-// 加载消息（未登录也能看）
-async function loadMessages() {
-  const res = await fetch('/api/messages');
-  const msgs = await res.json();
-  box.innerHTML = ''; // 清空
-  
-  msgs.forEach(m => {
-    addMsgToBox(m);
-  });
-  scrollToBottom();
-}
-
-// 添加消息到盒子
-function addMsgToBox(m) {
-  const div = document.createElement('div');
-  div.className = m.qq === currentUser?.qq ? 'msg me' : 'msg other';
-  
-  const avatar = document.createElement('img');
-  avatar.className = 'avatar';
-  avatar.src = `https://q1.qlogo.cn/g?b=qq&nk=${m.qq}&s=640`;
-  
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-  bubble.innerHTML = `<div>${m.nickname || m.qq}</div><div>${m.content}</div>`;
-  
-  const time = document.createElement('div');
-  time.className = 'time';
-  time.innerText = m.time;
-  
-  div.appendChild(time);
-  div.appendChild(avatar);
-  div.appendChild(bubble);
-  
-  box.appendChild(div);
-}
-
-// 发送消息（需要登录）
-sendBtn.onclick = async () => {
-  if(!currentUser) return alert('请先登录');
-  const text = msgInput.value.trim();
-  if(!text) return;
-  
-  const res = await fetch('/api/send', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({qq: currentUser.qq, content: text})
-  });
-  const data = await res.json();
-  if(data.ok) {
-    msgInput.value = '';
-    loadMessages();
-  } else {
-    alert(data.err || '发送失败');
-  }
-}
-
-// 加载在线人数
-async function loadOnlineUsers() {
-  const res = await fetch('/api/online');
-  const data = await res.json();
-  onlineCountEl.innerText = `${data.count}人在线`;
-}
-
-// 加载公告
+// 获取公告
 async function loadAnnouncement() {
   const res = await fetch('/api/announcement');
   const data = await res.json();
-  announcementBanner.querySelector('.banner-text').innerText = data.content || '暂无公告';
-  // 管理员点击可编辑
-  if(isAdmin) {
-    announcementBanner.style.cursor = 'pointer';
-    announcementBanner.onclick = () => editAnnouncement(data.content);
+  bannerText.innerText = data.content;
+}
+
+// 绑定公告编辑
+topBanner.addEventListener('click', () => {
+  if (!isAdmin) return;
+  const newContent = prompt('修改公告内容：', bannerText.innerText);
+  if (newContent !== null) {
+    saveAnnouncement(newContent);
+  }
+});
+editIcon.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const newContent = prompt('修改公告内容：', bannerText.innerText);
+  if (newContent !== null) saveAnnouncement(newContent);
+});
+
+async function saveAnnouncement(content) {
+  const res = await fetch('/api/setannouncement', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ qq: me?.qq, content })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    bannerText.innerText = content;
+    alert('修改成功');
+  } else {
+    alert(data.err);
   }
 }
 
-// 编辑公告（管理员）
-function editAnnouncement(oldContent) {
-  const newContent = prompt('请输入新公告内容：', oldContent);
-  if(newContent !== null && newContent !== oldContent) {
-    fetch('/api/setannouncement', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({qq: currentUser.qq, content: newContent})
-    }).then(res => res.json()).then(data => {
-      if(data.ok) {
-        loadAnnouncement();
-        alert('公告修改成功');
-      } else {
-        alert(data.err);
-      }
+// 加载历史消息
+async function loadHistory() {
+  const res = await fetch('/api/history');
+  const list = await res.json();
+  box.innerHTML = ''; // 清空
+  list.forEach(m => appendMsg(m, false)); // false表示不滚动到底部（因为是加载历史）
+}
+
+// 发送消息
+async function sendMsg() {
+  if (!me) return alert('请先登录');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  sendBtn.disabled = true;
+  const res = await fetch('/api/send', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ qq: me.qq, nickname: me.nickname, text })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    input.value = '';
+    input.style.height = 'auto';
+    // 发送后刷新消息
+    loadHistory();
+  } else {
+    alert(data.err);
+  }
+  sendBtn.disabled = false;
+}
+
+// 渲染消息
+function appendMsg(m, scroll = true) {
+  const div = document.createElement('div');
+  div.className = 'msg';
+  if (me && m.qq == me.qq) div.classList.add('me');
+  
+  const avatar = document.createElement('img');
+  avatar.className = 'avatar';
+  avatar.src = `https://q2.qlogo.cn/headimg_dl?dst_uin=${m.qq}&spec=100`;
+  
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  
+  const name = document.createElement('div');
+  name.className = 'name';
+  name.innerText = m.nickname;
+  
+  const text = document.createElement('div');
+  text.innerText = m.text;
+  
+  const time = document.createElement('div');
+  time.className = 'time';
+  time.innerText = formatTime(m.time);
+  
+  bubble.appendChild(name);
+  bubble.appendChild(text);
+  bubble.appendChild(time);
+  
+  // 管理员显示删除按钮
+  if (isAdmin) {
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.innerText = 'x';
+    delBtn.onclick = () => delMsg(m.id);
+    bubble.appendChild(delBtn);
+  }
+  
+  div.appendChild(avatar);
+  div.appendChild(bubble);
+  box.appendChild(div);
+  
+  if (scroll) box.scrollTop = box.scrollHeight;
+}
+
+// 删除消息
+async function delMsg(id) {
+  if (!confirm('确定删除这条消息？')) return;
+  const res = await fetch('/api/delmsg', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ qq: me.qq, msgId: id })
+  });
+  const data = await res.json();
+  if (data.ok) loadHistory();
+  else alert(data.err);
+}
+
+// 时间格式化
+function formatTime(ts) {
+  const d = new Date(ts);
+  const h = d.getHours().toString().padStart(2, '0');
+  const m = d.getMinutes().toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+// 检查登录状态
+function checkLogin() {
+  const saved = localStorage.getItem('qq_user');
+  if (saved) {
+    me = JSON.parse(saved);
+    myNameEl.innerText = me.nickname;
+    myAvatar.src = `https://q2.qlogo.cn/headimg_dl?dst_uin=${me.qq}&spec=100`;
+    logoutBtn.style.display = 'block';
+    sendBtn.disabled = false;
+    input.placeholder = '请输入消息...';
+    input.disabled = false;
+    // 检查是否是管理员
+    fetch('/api/announcement').then(r => r.json()).then(() => {
+      // 这里简单模拟，实际应该有个查用户的接口
+      isAdmin = ['123456789'].includes(me.qq); // 把这个换成你的管理员QQ
+      if (isAdmin) editIcon.style.display = 'block';
     });
+  } else {
+    me = null;
+    myNameEl.innerText = 'QQ群聊';
+    myAvatar.src = 'https://q2.qlogo.cn/headimg_dl?dst_uin=0&spec=100';
+    logoutBtn.style.display = 'none';
+    sendBtn.disabled = true;
+    input.placeholder = '请先登录才能发言';
+    input.disabled = true;
+    isAdmin = false;
+    editIcon.style.display = 'none';
   }
 }
 
-// 管理员面板点击
-adminPanelBtn.onclick = () => {
-  alert('管理员面板：这里可以删除消息、管理用户等（后续扩展）');
-};
+// 退出登录
+logoutBtn.addEventListener('click', () => {
+  localStorage.removeItem('qq_user');
+  checkLogin();
+  loadHistory(); // 刷新历史记录
+});
 
-// 主题切换
-themeToggle.onclick = () => {
-  document.body.classList.toggle('dark-theme');
-  themeToggle.innerText = document.body.classList.contains('dark-theme') ? '☀️' : '🌙';
-};
-
-// 辅助函数
-function scrollToBottom() {
-  box.scrollTop = box.scrollHeight;
+// 初始化
+async function init() {
+  checkLogin();
+  await loadAnnouncement();
+  await loadHistory();
+  setInterval(async () => {
+    const res = await fetch('/api/online');
+    const data = await res.json();
+    onlineCountEl.innerText = `${data.count}人在线`;
+  }, 5000);
 }
-
-// 模拟登录/注册弹窗（实际项目中可完善）
-window.showLoginModal = () => alert('这里弹出登录框');
-window.showRegisterModal = () => alert('这里弹出注册框');
 
 init();
 </script>
