@@ -59,7 +59,7 @@ app.get('/api/users', async c => {
 
 // 提供前端页面
 app.get('*', async c => {
-  const html = await fetch(new URL('./index.html', import.meta.url)).then(r => r.text())
+  const html = await fetch(new URL('./public/index.html', import.meta.url)).then(r => r.text())
   return c.html(html)
 })
 
