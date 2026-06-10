@@ -1,0 +1,4 @@
+[[d1_databases]]
+binding = "DB"
+database_name = "cf-chat-db"
+database_id = "9683bf63-d0dd-4efd-9dbd-07e3a5317cc2"
