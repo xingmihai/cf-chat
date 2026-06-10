@@ -29,6 +29,8 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
 #login{padding:25px;gap:12px}
 #bar{display:flex;padding:8px 10px;gap:6px;border-top:1px solid #eee}
 #bar input{flex:1}
+#guestBar{display:none;padding:10px;text-align:center;border-top:1px solid #eee;font-size:13px;color:#999}
+#guestBar a{color:#0088ff;cursor:pointer;text-decoration:underline}
 #set{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;place-items:center}
 #set>div{background:#fff;padding:18px;border-radius:10px;display:flex;flex-direction:column;gap:8px;width:90%;max-width:320px}
 #annEdit{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);place-items:center}
@@ -43,6 +45,8 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
 .dark .time{color:#888}
 .dark #bar{border-top-color:#333}
 .dark #bar input{background:#16213e;color:#eee;border-color:#333}
+.dark #guestBar{border-top-color:#333;color:#666}
+.dark #guestBar a{color:#4fc3f7}
 .dark #set>div{background:#1a1a2e;color:#eee}
 .dark #set input{background:#16213e;color:#eee;border-color:#333}
 .dark #login input{background:#16213e;color:#eee;border-color:#333}
@@ -68,13 +72,15 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
   <button onclick="reg()">注 册</button>
   <button onclick="login()">登 录</button>
   <div id="lerr" style="color:red;font-size:13px"></div>
+  <div style="text-align:center;margin-top:8px"><a href="#" onclick="enterGuest()" style="color:#0088ff;font-size:13px">以游客身份浏览</a></div>
  </div>
  <header id="hdr" style="display:none">
   <img id="himg"><span id="hnm"></span>
   <span id="onlineCount" style="font-size:12px;margin-left:4px;opacity:.8"></span>
   <button style="margin-left:auto;font-size:12px;padding:4px 8px" onclick="toggleDark()">🌙</button>
-  <button style="font-size:12px;padding:4px 8px" onclick="showSet()">改昵称</button>
-  <button style="font-size:12px;padding:4px 8px" onclick="logout()">退出</button>
+  <button id="adminBtn" style="font-size:12px;padding:4px 8px;display:none" onclick="showSet()">改昵称</button>
+  <button id="loginBtn" style="font-size:12px;padding:4px 8px" onclick="showLogin()">登录</button>
+  <button id="logoutBtn" style="font-size:12px;padding:4px 8px;display:none" onclick="logout()">退出</button>
  </header>
  <div id="annBar" class="announcement" style="display:none">
   <span id="annText"></span>
@@ -82,6 +88,7 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
  </div>
  <div id="box"></div>
  <div id="bar" style="display:none"><input id="itxt" placeholder="说点什么…" onkeydown="if(event.key==='Enter')send()"><button onclick="send()">发送</button></div>
+ <div id="guestBar"><a onclick="showLogin()">登录</a> 后可发言</div>
 </div>
 <div id="set"><div>
   <h4>修改昵称（需验证密码）</h4>
@@ -100,7 +107,7 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
 </div></div>
 <script>
 const API='';
-let _qq='',_nm='',_isAdmin=false;
+let _qq='',_nm='',_isAdmin=false,_isLoggedIn=false;
 const $ = s=>document.querySelector(s);
 
 function show(id){
@@ -133,14 +140,72 @@ function formatTime(unixTs){
   return today+' '+h+':'+m;
 }
 
-if(localStorage.qq) autoLogin(); else show('#login');
+function showLogin(){
+  $('#login').style.display='flex';
+  $('#hdr').style.display='none';
+  $('#bar').style.display='none';
+  $('#guestBar').style.display='none';
+}
+
+// 游客进入
+function enterGuest(){
+  _isLoggedIn=false;
+  _qq='';
+  _nm='游客';
+  _isAdmin=false;
+  $('#login').style.display='none';
+  $('#hdr').style.display='flex';
+  $('#himg').src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%23ccc%22/><text x=%2250%22 y=%2265%22 text-anchor=%22middle%22 font-size=%2240%22 fill=%22white%22>?</text></svg>';
+  $('#hnm').textContent='游客';
+  $('#bar').style.display='none';
+  $('#guestBar').style.display='block';
+  $('#loginBtn').style.display='inline-block';
+  $('#logoutBtn').style.display='none';
+  $('#adminBtn').style.display='none';
+  loadMessages();
+  setInterval(loadMessages,3000);
+  loadAnnouncement();
+}
+
+// 用户登录后进入
+function enterUser(qq,nm,save){
+  _isLoggedIn=true;
+  _qq=qq;
+  _nm=nm;
+  _isAdmin=false;
+  if(save){localStorage.qq=qq;localStorage.nm=nm}
+  $('#himg').src='https://q.qlogo.cn/headimg_dl?dst_uin='+qq+'&spec=100';
+  $('#hnm').textContent=nm;
+  $('#login').style.display='none';
+  $('#hdr').style.display='flex';
+  $('#bar').style.display='flex';
+  $('#guestBar').style.display='none';
+  $('#loginBtn').style.display='none';
+  $('#logoutBtn').style.display='inline-block';
+  loadMessages();
+  setInterval(loadMessages,3000);
+  heartbeat();
+  setInterval(heartbeat,29000);
+  updateOnline();
+  setInterval(updateOnline,14500);
+  checkAdmin();
+  loadAnnouncement();
+}
+
+// 兼容旧 autoLogin
+if(localStorage.qq){
+  const qq=localStorage.qq,nm=localStorage.nm;
+  if(qq) enterUser(qq,nm,false);
+} else {
+  enterGuest();
+}
 
 async function reg(){
  const qq=$('#iqq').value.trim(), pwd=$('#ipwd').value, nm=$('#iname').value.trim()||qq;
  if(!qq||!pwd) return $('#lerr').textContent='请填QQ号和密码';
  const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq,pwd,nickname:nm})});
  const j=await r.json(); if(j.err) return $('#lerr').textContent=j.err;
- enter(qq,nm);
+ enterUser(qq,nm);
 }
 
 async function login(){
@@ -148,55 +213,33 @@ async function login(){
  if(!qq||!pwd) return $('#lerr').textContent='请填QQ号和密码';
  const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq,pwd})});
  const j=await r.json(); if(j.err) return $('#lerr').textContent=j.err;
- enter(j.qq,j.nickname);
+ enterUser(j.qq,j.nickname);
 }
 
-function autoLogin(){
- const qq=localStorage.qq,nm=localStorage.nm;
- if(qq) enter(qq,nm,false);
-}
-
-function enter(qq,nm,save=true){
- _isAdmin=false;
- _qq=qq;_nm=nm;
- if(save){localStorage.qq=qq;localStorage.nm=nm}
- $('#himg').src='https://q.qlogo.cn/headimg_dl?dst_uin='+qq+'&spec=100';
- $('#hnm').textContent=nm;
- $('#login').style.display='none';
- $('#hdr').style.display='flex';
- $('#bar').style.display='flex';
- load();
- setInterval(load,3000);
- heartbeat();
- setInterval(heartbeat,29000);
- updateOnline();
- setInterval(updateOnline,14500);
- checkAdmin();
- loadAnnouncement();
-}
-
-async function load(){
- const r=await fetch('/api/messages'), j=await r.json();
- let html='';
- for(let m of j){
-   const isMe=m.qq===_qq;
-   const meClass=isMe?'me':'';
-   html += '<div class="msg '+meClass+'">' +
-     '<img src="https://q.qlogo.cn/headimg_dl?dst_uin='+m.qq+'&spec=100" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>\'">' +
-     '<div class="bubble"><div class="nm">'+esc(m.nickname)+'</div>'+esc(m.content)+
-     '<div class="time">'+formatTime(m.time)+
-     (_isAdmin?' <span class="del-btn" onclick="delMsg('+m.id+')">🗑️</span>':'')+
-     '</div></div>' +
-     '</div>';
- }
- $('#box').innerHTML=html;
- $('#box').scrollTop=$('#box').scrollHeight;
+function loadMessages(){
+ fetch('/api/messages').then(r=>r.json()).then(j=>{
+   let html='';
+   for(let m of j){
+     const isMe=m.qq===_qq;
+     const meClass=isMe?'me':'';
+     html += '<div class="msg '+meClass+'">' +
+       '<img src="https://q.qlogo.cn/headimg_dl?dst_uin='+m.qq+'&spec=100" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>\'">' +
+       '<div class="bubble"><div class="nm">'+esc(m.nickname)+'</div>'+esc(m.content)+
+       '<div class="time">'+formatTime(m.time)+
+       (_isAdmin?' <span class="del-btn" onclick="delMsg('+m.id+')">🗑️</span>':'')+
+       '</div></div>' +
+       '</div>';
+   }
+   $('#box').innerHTML=html;
+   $('#box').scrollTop=$('#box').scrollHeight;
+ }).catch(()=>{});
 }
 
 async function send(){
+ if(!_isLoggedIn) return;
  const t=$('#itxt').value.trim(); if(!t)return;
  await fetch('/api/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq,nickname:_nm,content:t})});
- $('#itxt').value=''; load();
+ $('#itxt').value=''; loadMessages();
 }
 
 function showSet(){$('#set').style.display='grid';$('#snewname').value=_nm}
@@ -206,12 +249,16 @@ async function chgName(){
  const r=await fetch('/api/profile',{method:'POST',headers:{'Content-Type':'application/json'},
   body:JSON.stringify({qq:_qq,pwd:$('#soldpwd').value,nickname:$('#snewname').value.trim()||_nm})});
  const j=await r.json(); if(j.err) return $('#serr').textContent=j.err;
- _nm=j.nickname; localStorage.nm=_nm; $('#hnm').textContent=_nm; closeSet(); load();
+ _nm=j.nickname; localStorage.nm=_nm; $('#hnm').textContent=_nm; closeSet(); loadMessages();
 }
 
-function logout(){ localStorage.clear(); location.reload() }
+function logout(){
+ localStorage.clear();
+ location.reload();
+}
 
 async function heartbeat(){
+  if(!_isLoggedIn) return;
   await fetch('/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq})});
 }
 
@@ -224,10 +271,12 @@ async function updateOnline(){
 }
 
 async function checkAdmin(){
+  if(!_isLoggedIn) return;
   try {
     const r=await fetch('/api/checkadmin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq})});
     const j=await r.json();
     _isAdmin = j.admin || false;
+    if(_isAdmin) $('#adminBtn').style.display='inline-block';
   } catch(e){}
 }
 
@@ -268,7 +317,7 @@ async function saveAnn(){
 async function delMsg(id){
   if(!confirm('确认删除这条消息？')) return;
   await fetch('/api/delmsg',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq,msgId:id})});
-  load();
+  loadMessages();
 }
 
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
