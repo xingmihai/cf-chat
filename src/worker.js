@@ -230,7 +230,7 @@ export default {
       await env.KV.put(minuteKey, String(msgCount + 1), { expirationTtl: 120 });
       
       const user = await env.DB.prepare('SELECT nickname, qq FROM users WHERE id=?').bind(tokenData.uid).first();
-      const avatar = user.qq ? `https://q1.qlogo.cn/g?b=qq&nk=${user.qq}&s=100` : '';
+      const avatar = user.qq ? `http://q.qlogo.cn/headimg/${user.qq}/100` : '';
       
       await env.DB.prepare(
         'INSERT INTO messages(user_id, nickname, avatar, content) VALUES(?, ?, ?, ?)'
