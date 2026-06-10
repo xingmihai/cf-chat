@@ -1,5 +1,11 @@
 {
   "observability": {
-    "enabled": false
+    "logs": {
+      "enabled": false,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false
+    }
   }
 }
