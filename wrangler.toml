@@ -2,7 +2,6 @@ name = "cf-chat"
 main = "src/index.js"
 compatibility_date = "2024-06-01"
 
-# 告诉 Wrangler 可以导入 HTML 文件
 rules = [
   { type = "Text", globs = ["**/*.html"], fallthrough = true }
 ]
@@ -11,3 +10,7 @@ rules = [
 binding = "DB"
 database_name = "chat-db"
 database_id = "1c2e4bf4-9c61-4065-9c26-b3dc9a70040d"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "f27c2749be5349caa61bd08c3a40cae7"
