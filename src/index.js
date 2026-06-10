@@ -89,7 +89,6 @@ export default {
       return new Response(JSON.stringify({ok:true}),{headers:cors});
     }
 
-
     // 返回前端页面
     return new Response(indexHtml, { 
       headers: { 'Content-Type': 'text/html;charset=utf-8' } 
