@@ -1,5 +1,6 @@
 name = "cf-chat"
 main = "src/index.ts"
+compatibility_date = "2026-06-10"
 [[d1_databases]]
 binding = "DB"
 database_name = "cf-chat-db"
