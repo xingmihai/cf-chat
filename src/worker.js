@@ -1,32 +1,34 @@
 import template from './template.html';
 
 async function sendEmail(env, to, code) {
-  const sender = 'noreply@xmhai.cn';  // 必须改成你的域名
-  const response = await fetch('https://api.mailchannels.net/tx/v1/send', {
+  const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify({
-      personalizations: [{ to: [{ email: to }] }],
-      from: { email: sender, name: '聊天室' },
+      from: '聊天室 <onboarding@resend.dev>',
+      to: [to],
       subject: '聊天室登录验证码',
-      content: [{
-        type: 'text/html',
-        value: `
-          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
-            <h2 style="color:#4f6ef7">聊天室登录验证码</h2>
-            <p>您的验证码是：</p>
-            <div style="font-size:32px;letter-spacing:6px;font-weight:bold;color:#333;background:#f0f4ff;padding:12px 24px;text-align:center;border-radius:8px;margin:16px 0">
-              ${code}
-            </div>
-            <p style="color:#999;font-size:12px">验证码5分钟内有效，请勿泄露给他人。</p>
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
+          <h2 style="color:#4f6ef7">🔐 聊天室登录验证码</h2>
+          <p>您好！</p>
+          <p>您正在登录聊天室，验证码如下：</p>
+          <div style="font-size:36px;letter-spacing:8px;font-weight:bold;color:#333;background:#f0f4ff;padding:16px 24px;text-align:center;border-radius:8px;margin:20px 0">
+            ${code}
           </div>
-        `
-      }]
+          <p style="color:#999;font-size:13px">验证码 5 分钟内有效，请勿泄露给他人。</p>
+          <p style="color:#999;font-size:12px">如果不是您本人操作，请忽略此邮件。</p>
+        </div>
+      `
     })
   });
 
   if (!response.ok) {
-    throw new Error('邮件发送失败: ' + await response.text());
+    const errText = await response.text();
+    throw new Error(errText);
   }
 }
 
@@ -37,19 +39,23 @@ export default {
 
     // ---- 发送验证码 ----
     if (path === '/api/send-code' && request.method === 'POST') {
-      const { email } = await request.json();
-      const code = String(Math.floor(100000 + Math.random() * 900000));
-      
-      await env.KV.put('code:' + email, code, { expirationTtl: 300 });
-      
-      try {
-        await sendEmail(env, email, code);
-        return new Response(JSON.stringify({ ok: true, message: '验证码已发送到邮箱' }));
-      } catch (err) {
-        console.error('邮件发送失败:', err);
-        return new Response(JSON.stringify({ err: '邮件发送失败，请稍后重试' }), { status: 500 });
-      }
-    }
+  const { email } = await request.json();
+  
+  if (!email || !email.includes('@')) {
+    return new Response(JSON.stringify({ err: '请输入有效的邮箱地址' }), { status: 400 });
+  }
+  
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  await env.KV.put('code:' + email, code, { expirationTtl: 300 });
+  
+  try {
+    await sendEmail(env, email, code);
+    return new Response(JSON.stringify({ ok: true, message: '验证码已发送到邮箱' }));
+  } catch (err) {
+    console.error('邮件发送失败:', err);
+    return new Response(JSON.stringify({ err: '邮件发送失败，请稍后重试' }), { status: 500 });
+  }
+}
 
     // ---- 登录 ----
     if (path === '/api/login' && request.method === 'POST') {
