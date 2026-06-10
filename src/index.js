@@ -78,6 +78,18 @@ export default {
       return new Response(JSON.stringify({count: result.count}),{headers:cors});
     }
 
+        // 删除消息（仅管理员）
+    if (url.pathname === '/api/delmsg' && request.method === 'POST') {
+      const { qq, msgId } = await request.json();
+      // 检查是否是管理员
+      const admin = await db.prepare('SELECT qq FROM admins WHERE qq=?').bind(qq).first();
+      if (!admin) return new Response(JSON.stringify({err:'你不是管理员'}),{headers:cors});
+      // 删除消息
+      await db.prepare('DELETE FROM messages WHERE id=?').bind(msgId).run();
+      return new Response(JSON.stringify({ok:true}),{headers:cors});
+    }
+
+
     // 返回前端页面
     return new Response(indexHtml, { 
       headers: { 'Content-Type': 'text/html;charset=utf-8' } 
