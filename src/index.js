@@ -51,6 +51,7 @@ if (url.pathname === '/api/sendcode' && request.method === 'POST') {
   
   return new Response(JSON.stringify({ ok: true }), { headers: cors });
 }
+
     // ========== 注册 ==========
     if (url.pathname === '/api/register' && request.method === 'POST') {
       const { email, pwd, nickname, code } = await request.json();
