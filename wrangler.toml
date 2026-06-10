@@ -1,3 +1,5 @@
+name = "cf-chat"
+main = "src/index.ts"
 [[d1_databases]]
 binding = "DB"
 database_name = "cf-chat-db"
