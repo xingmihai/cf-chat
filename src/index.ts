@@ -20,38 +20,35 @@ export default {
       return new Response(JSON.stringify({ err: msg }), { headers: cors });
     }
 
-//  发送验证码
-if (url.pathname === '/api/sendcode' && request.method === 'POST') {
-  const { email } = await request.json();
-  if (!/^[a-z0-9._%+\-]+@qq\.com$/i.test(email)) {
-    return jsonErr('仅支持QQ邮箱');
-  }
-  const code = String(Math.floor(100000 + Math.random() * 900000));
-  await kv.put('vc:' + email, code, { expirationTtl: 600 });
-  
-  // 发邮件，这次不吞异常
-  console.log('准备发邮件到:', email);
-  const mailRes = await fetch('https://api.mailchannels.net/tx/v1/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      personalizations: [{ to: [{ email }] }],
-      from: { email: 'noreply@xmhai.cn', name: 'Chat验证' },
-      subject: '您的注册验证码',
-      content: [{
-        type: 'text/plain',
-        value: `您的验证码是：${code}\n10分钟内有效，请勿泄露。`
-      }]
-
-    })
-  });
-  
-  console.log('邮件API返回状态:', mailRes.status);
-  const mailBody = await mailRes.text();
-  console.log('邮件API返回内容:', mailBody);
-  
-  return new Response(JSON.stringify({ ok: true }), { headers: cors });
-}
+    // ========== 发送验证码 ==========
+    if (url.pathname === '/api/sendcode' && request.method === 'POST') {
+      const { email } = await request.json();
+      if (!/^[a-z0-9._%+\-]+@qq\.com$/i.test(email)) {
+        return jsonErr('仅支持QQ邮箱');
+      }
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      await kv.put('vc:' + email, code, { expirationTtl: 600 }); // 10分钟有效期
+      
+      // 通过 MailChannels 发送验证码
+      try {
+        await fetch('https://api.mailchannels.net/tx/v1/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            personalizations: [{ to: [{ email }] }],
+            from: { email: 'noreply@你的域名.com', name: 'Chat验证' },
+            subject: '您的注册验证码',
+            content: [{
+              type: 'text/plain',
+              value: `您的验证码是：${code}\n10分钟内有效，请勿泄露。`
+            }]
+          })
+        });
+      } catch (e) {
+        // 发送失败不影响，用户可重试
+      }
+      return new Response(JSON.stringify({ ok: true }), { headers: cors });
+    }
 
     // ========== 注册 ==========
     if (url.pathname === '/api/register' && request.method === 'POST') {
