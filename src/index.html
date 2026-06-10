@@ -8,315 +8,215 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#f0f2f5;display:flex;justify-content:center}
 #app{width:100%;max-width:420px;height:100vh;display:flex;flex-direction:column;background:#fff;transition:.3s}
-
-/* 顶部导航栏 */
 header{padding:10px 12px;background:#0088ff;color:#fff;font-size:15px;display:flex;align-items:center;gap:8px}
 header img{width:34px;height:34px;border-radius:50%}
-
-/* --- 公告横幅样式 --- */
-#topBanner{
-  background:linear-gradient(135deg,#667eea,#764ba2);
-  color:#fff;
-  padding:10px 14px;
-  font-size:14px;
-  text-align:center;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  min-height:40px;
-  word-break:break-word;
-}
-#topBanner.show { display: flex !important; }
-#topBanner .banner-text{flex:1}
-#topBanner .edit-banner{
-  cursor:pointer;
-  font-size:16px;
-  opacity:.8;
-  flex-shrink:0;
-  margin-left:10px;
-}
-#topBanner .edit-banner:hover{opacity:1}
-/* -------------------- */
-
-#box{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;background:#e5ddd5}
+#box{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
 .msg{display:flex;gap:6px;align-items:flex-start;animation:fadeIn .2s}
 .msg.me{flex-direction:row-reverse}
 .msg.me .bubble{background:#95ec69;border-radius:10px 0 10px 10px}
-.msg.me .name{display:none}
-.bubble{background:#fff;padding:8px 12px;border-radius:0 10px 10px 10px;box-shadow:0 1px 1px rgba(0,0,0,.05);max-width:70%}
-.name{font-size:12px;color:#888;margin-bottom:2px}
-.time{font-size:10px;color:#aaa;margin-top:2px}
-.input-area{display:flex;padding:8px;border-top:1px solid #ddd;background:#f7f7f7;gap:8px;align-items:center}
-.input-area input{flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:20px;outline:none;font-size:14px}
-.input-area button{padding:8px 16px;border:none;border-radius:20px;background:#0088ff;color:#fff;cursor:pointer}
-.bottom-bar{display:flex;justify-content:center;padding:5px 0;background:#fff;border-top:1px solid #eee;font-size:12px;color:#999}
+.msg.me .time{text-align:right}
+.msg img{width:40px;height:40px;border-radius:50%;flex-shrink:0}
+.bubble{max-width:75%;background:#f0f0f0;padding:6px 10px;border-radius:0 10px 10px 10px;font-size:14px}
+.bubble .nm{font-size:12px;color:#0088ff;margin-bottom:2px}
+.time{font-size:11px;color:#999;margin-top:2px}
+.del-btn{font-size:11px;color:#999;cursor:pointer;margin-left:6px;display:none}
+.msg:hover .del-btn{display:inline}
+.dark .del-btn{color:#666}
+input,button{font-size:14px;padding:8px 10px;border:1px solid #ddd;border-radius:6px}
+button{background:#0088ff;color:#fff;border:none;cursor:pointer}
+#login,#chat{display:none;flex-direction:column;flex:1}
+#login{padding:25px;gap:12px}
+#bar{display:flex;padding:8px 10px;gap:6px;border-top:1px solid #eee}
+#bar input{flex:1}
+#set{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;place-items:center}
+#set>div{background:#fff;padding:18px;border-radius:10px;display:flex;flex-direction:column;gap:8px;width:90%;max-width:320px}
 
-/* 登录弹窗 */
-#loginBox{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:center;z-index:100;}
-#loginBox .box{background:#fff;padding:20px;border-radius:10px;width:80%;max-width:300px;}
-#loginBox h3{text-align:center;margin-bottom:15px;font-size:16px;}
-#loginBox input{width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;margin-bottom:10px;box-sizing:border-box;}
-#loginBox button{width:100%;padding:10px;background:#0088ff;color:#fff;border:none;border-radius:4px;cursor:pointer;}
-.error-msg{color:red;font-size:12px;text-align:center;margin-top:5px;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+/* 暗黑模式 */
+.dark #app{background:#1a1a2e;color:#eee}
+.dark .bubble{background:#16213e;color:#eee}
+.dark .bubble .nm{color:#4fc3f7}
+.dark .msg.me .bubble{background:#1b4332;color:#eee}
+.dark .time{color:#888}
+.dark #bar{border-top-color:#333}
+.dark #bar input{background:#16213e;color:#eee;border-color:#333}
+.dark #set>div{background:#1a1a2e;color:#eee}
+.dark #set input{background:#16213e;color:#eee;border-color:#333}
+.dark #login input{background:#16213e;color:#eee;border-color:#333}
+.dark #login h3{color:#eee}
+.dark header{background:#0d47a1}
+.dark button{background:#1565c0}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
 <div id="app">
-  <!-- 公告横幅 -->
-  <div id="topBanner">
-    <span class="banner-text"></span>
-    <span class="edit-banner" title="修改公告" style="display:none;">✏️</span>
-  </div>
-
-  <!-- 顶部导航 -->
-  <header>
-    <img id="myAvatar" src="https://q1.qlogo.cn/g?b=qq&nk=12345&s=100" alt="头像">
-    <span id="myName">QQ群聊</span>
-    <span style="margin-left:auto;font-size:18px;">🌙</span>
-    <span style="cursor:pointer;">改昵称</span>
-    <span style="cursor:pointer;">退出</span>
-  </header>
-
-  <!-- 消息区域 -->
-  <div id="box"></div>
-
-  <!-- 底部输入 -->
-  <div class="input-area">
-    <div style="font-size:24px;cursor:pointer;padding:0 5px;">😀</div>
-    <input type="text" id="msgInput" placeholder="请输入消息..." disabled>
-    <button id="sendBtn" disabled>发送</button>
-  </div>
-  
-  <!-- 底部提示 -->
-  <div class="bottom-bar">
-    <span id="statusText">未登录</span>
-  </div>
+ <div id="login">
+  <h3 style="text-align:center">QQ号登录/注册</h3>
+  <input id="iqq" placeholder="QQ号（纯数字）" inputmode="numeric">
+  <input id="ipwd" type="password" placeholder="⚠️ 不要填真实QQ密码，仅作本网站登录用">
+  <input id="iname" placeholder="自定义昵称（注册时填，登录时可不填）">
+  <button onclick="reg()">注 册</button>
+  <button onclick="login()">登 录</button>
+  <div id="lerr" style="color:red;font-size:13px"></div>
+ </div>
+ <header id="hdr" style="display:none">
+  <img id="himg"><span id="hnm"></span>
+  <span id="onlineCount" style="font-size:12px;margin-left:4px;opacity:.8"></span>
+  <button style="margin-left:auto;font-size:12px;padding:4px 8px" onclick="toggleDark()">🌙</button>
+  <button style="font-size:12px;padding:4px 8px" onclick="showSet()">改昵称</button>
+  <button style="font-size:12px;padding:4px 8px" onclick="logout()">退出</button>
+ </header>
+ <div id="box"></div>
+ <div id="bar" style="display:none"><input id="itxt" placeholder="说点什么…" onkeydown="if(event.key==='Enter')send()"><button onclick="send()">发送</button></div>
 </div>
-
-<!-- 登录弹窗 -->
-<div id="loginBox">
-  <div class="box">
-    <h3>QQ账号登录</h3>
-    <input type="text" id="loginQQ" placeholder="请输入QQ号" maxlength="13">
-    <input type="password" id="loginPwd" placeholder="请输入密码">
-    <div class="error-msg" id="loginErr"></div>
-    <button id="doLogin">登录 / 注册</button>
-  </div>
-</div>
-
+<div id="set"><div>
+  <h4>修改昵称（需验证密码）</h4>
+  <input id="soldpwd" type="password" placeholder="当前密码">
+  <input id="snewname" placeholder="新昵称">
+  <button onclick="chgName()">保存</button>
+  <button onclick="closeSet()">取消</button>
+  <div id="serr" style="color:red;font-size:12px"></div>
+</div></div>
 <script>
-const box = document.getElementById('box');
-const msgInput = document.getElementById('msgInput');
-const sendBtn = document.getElementById('sendBtn');
-const loginBox = document.getElementById('loginBox');
-const doLogin = document.getElementById('doLogin');
-const loginQQ = document.getElementById('loginQQ');
-const loginPwd = document.getElementById('loginPwd');
-const loginErr = document.getElementById('loginErr');
-const myName = document.getElementById('myName');
-const topBanner = document.getElementById('topBanner');
-const bannerText = topBanner.querySelector('.banner-text');
-const editBannerBtn = topBanner.querySelector('.edit-banner');
-const statusText = document.getElementById('statusText');
+const API='';
+let _qq='',_nm='',_isAdmin=false;
+const $ = s=>document.querySelector(s);
 
-let currentUser = null;
-let isAdmin = false;
+function show(id){
+  document.querySelectorAll('#login,#chat,#hdr,#bar').forEach(e=>e.style.display='none');
+  $(id).style.display='flex';
+}
 
-// 1. 页面加载时：检查登录状态 + 获取公告
-document.addEventListener('DOMContentLoaded', async () => {
-  const saved = localStorage.getItem('user');
-  if(saved) {
-    try {
-      currentUser = JSON.parse(saved);
-      updateUI();
-      loadAnnouncement();
-      return;
-    } catch(e){}
-  }
-  showLogin();
-});
+// 暗黑模式切换
+function toggleDark(){
+  document.body.classList.toggle('dark');
+  const isDark=document.body.classList.contains('dark');
+  localStorage.setItem('dark',isDark?'1':'');
+  document.querySelector('#hdr button:first-child').textContent=isDark?'☀️':'🌙';
+}
+// 初始化暗黑模式
+if(localStorage.getItem('dark')){
+  document.body.classList.add('dark');
+}
 
-// 加载公告
-async function loadAnnouncement() {
+function formatTime(unixTs){
+  if(!unixTs) return '';
+  const d=new Date(unixTs*1000);
+  const now=new Date();
+  const today=d.toDateString()===now.toDateString()?'今天':
+              new Date(now-864e5).toDateString()===d.toDateString()?'昨天':
+              d.getFullYear()===now.getFullYear()?(d.getMonth()+1)+'/'+d.getDate():
+              d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+  const h=d.getHours().toString().padStart(2,'0');
+  const m=d.getMinutes().toString().padStart(2,'0');
+  return today+' '+h+':'+m;
+}
+
+if(localStorage.qq) autoLogin(); else show('#login');
+
+async function reg(){
+ const qq=$('#iqq').value.trim(), pwd=$('#ipwd').value, nm=$('#iname').value.trim()||qq;
+ if(!qq||!pwd) return $('#lerr').textContent='请填QQ号和密码';
+ const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq,pwd,nickname:nm})});
+ const j=await r.json(); if(j.err) return $('#lerr').textContent=j.err;
+ enter(qq,nm);
+}
+
+async function login(){
+ const qq=$('#iqq').value.trim(), pwd=$('#ipwd').value;
+ if(!qq||!pwd) return $('#lerr').textContent='请填QQ号和密码';
+ const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq,pwd})});
+ const j=await r.json(); if(j.err) return $('#lerr').textContent=j.err;
+ enter(j.qq,j.nickname);
+}
+
+function autoLogin(){
+ const qq=localStorage.qq,nm=localStorage.nm;
+ if(qq) enter(qq,nm,false);
+}
+
+function enter(qq,nm,save=true){
+ _isAdmin=false;
+ _qq=qq;_nm=nm;
+ if(save){localStorage.qq=qq;localStorage.nm=nm}
+ $('#himg').src='https://q.qlogo.cn/headimg_dl?dst_uin='+qq+'&spec=100';
+ $('#hnm').textContent=nm;
+ $('#login').style.display='none';
+ $('#hdr').style.display='flex';
+ $('#bar').style.display='flex';
+ load();
+ setInterval(load,3000);
+ heartbeat();
+ setInterval(heartbeat,28000);
+ updateOnline();
+ setInterval(updateOnline,14000);
+ checkAdmin();
+}
+
+async function load(){
+ const r=await fetch('/api/messages'), j=await r.json();
+ let html='';
+ for(let m of j){
+   const isMe=m.qq===_qq;
+   const meClass=isMe?'me':'';
+   html += '<div class="msg '+meClass+'">' +
+     '<img src="https://q.qlogo.cn/headimg_dl?dst_uin='+m.qq+'&spec=100" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22/>\'">' +
+     '<div class="bubble"><div class="nm">'+esc(m.nickname)+'</div>'+esc(m.content)+
+     '<div class="time">'+formatTime(m.time)+
+     (_isAdmin?' <span class="del-btn" onclick="delMsg('+m.id+')">🗑️</span>':'')+
+     '</div></div>' +
+     '</div>';
+ }
+ $('#box').innerHTML=html;
+ $('#box').scrollTop=$('#box').scrollHeight;
+}
+
+async function send(){
+ const t=$('#itxt').value.trim(); if(!t)return;
+ await fetch('/api/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq,nickname:_nm,content:t})});
+ $('#itxt').value=''; load();
+}
+
+function showSet(){$('#set').style.display='grid';$('#snewname').value=_nm}
+function closeSet(){$('#set').style.display='none';$('#serr').textContent=''}
+
+async function chgName(){
+ const r=await fetch('/api/profile',{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({qq:_qq,pwd:$('#soldpwd').value,nickname:$('#snewname').value.trim()||_nm})});
+ const j=await r.json(); if(j.err) return $('#serr').textContent=j.err;
+ _nm=j.nickname; localStorage.nm=_nm; $('#hnm').textContent=_nm; closeSet(); load();
+}
+
+function logout(){ localStorage.clear(); location.reload() }
+
+async function heartbeat(){
+  await fetch('/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq})});
+}
+
+async function updateOnline(){
   try {
-    const res = await fetch('/api/announcement');
-    const data = await res.json();
-    if(data.content && data.content.trim()) {
-      bannerText.innerText = data.content;
-      topBanner.classList.add('show');
-    } else {
-      topBanner.classList.remove('show');
-    }
-  } catch(e) {
-    console.log('获取公告失败', e);
-  }
+    const r=await fetch('/api/online');
+    const j=await r.json();
+    $('#onlineCount').textContent='👤'+j.count;
+  } catch(e){}
 }
 
-// 管理员点击修改公告
-editBannerBtn.addEventListener('click', () => {
-  if(!isAdmin) return;
-  const newContent = prompt('请输入新的公告内容：', bannerText.innerText);
-  if(newContent !== null) {
-    fetch('/api/setannouncement', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ qq: currentUser.qq, content: newContent })
-    }).then(res => res.json()).then(d => {
-      if(d.ok) {
-        bannerText.innerText = newContent;
-        alert('公告已修改');
-      } else {
-        alert('修改失败：' + (d.err || '未知错误'));
-      }
-    });
-  }
-});
-
-// 2. 显示登录框
-function showLogin() {
-  loginBox.style.display = 'flex';
-  msgInput.disabled = true;
-  sendBtn.disabled = true;
-  statusText.innerText = '未登录';
-}
-
-// 3. 登录/注册逻辑
-doLogin.addEventListener('click', async () => {
-  const qq = loginQQ.value.trim();
-  const pwd = loginPwd.value.trim();
-  loginErr.innerText = '';
-  
-  if(!/^\d{5,13}$/.test(qq)) { loginErr.innerText='QQ号格式错误';return; }
-  if(!pwd) { loginErr.innerText='请输入密码';return; }
-
-  const res = await fetch('/api/register', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ qq, pwd, nickname: '用户'+qq.slice(-4) })
-  });
-  const data = await res.json();
-  
-  if(data.err) {
-    loginErr.innerText = data.err;
-  } else {
-    currentUser = { qq, nickname: data.nickname };
-    localStorage.setItem('user', JSON.stringify(currentUser));
-    updateUI();
-    loginBox.style.display = 'none';
-    loadAnnouncement();
-    addSystemMsg('欢迎 ' + currentUser.nickname + ' 加入群聊！');
-  }
-});
-
-// 4. 更新UI（登录后）
-function updateUI() {
-  if(!currentUser) return showLogin();
-  msgInput.disabled = false;
-  sendBtn.disabled = false;
-  myName.innerText = currentUser.nickname;
-  document.getElementById('myAvatar').src = `https://q1.qlogo.cn/g?b=qq&nk=${currentUser.qq}&s=100`;
-  
-  // 管理员判断（示例：QQ 123456789 是管理员）
-  isAdmin = (currentUser.qq === '123456789'); 
-  if(isAdmin) {
-    editBannerBtn.style.display = 'block';
-  }
-  
-  statusText.innerText = '已登录';
-}
-
-// 5. 发送消息
-sendBtn.addEventListener('click', sendMsg);
-msgInput.addEventListener('keypress', (e) => { if(e.key==='Enter') sendMsg(); });
-
-async function sendMsg() {
-  const content = msgInput.value.trim();
-  if(!content) return;
-  
-  const res = await fetch('/api/send', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ 
-      qq: currentUser.qq, 
-      nickname: currentUser.nickname, 
-      content: content  // 改为 content 匹配后端
-    })
-  });
-  const data = await res.json();
-  if(data.ok) {
-    msgInput.value = '';
-  } else {
-    alert('发送失败：' + data.err);
-  }
-}
-
-// 6. 拉取消息
-async function loadMsgs() {
+async function checkAdmin(){
   try {
-    const res = await fetch('/api/msgs');  // 改为 /api/msgs 匹配后端
-    if (!res.ok) return;
-    const msgs = await res.json();
-    box.innerHTML = '';
-    msgs.forEach(m => addMsg(m));
-    scrollBottom();
-  } catch(e) {
-    console.log('加载消息失败', e);
-  }
+    const r=await fetch('/api/checkadmin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq})});
+    const j=await r.json();
+    _isAdmin = j.admin || false;
+  } catch(e){}
 }
 
-// 7. 添加消息到页面
-function addMsg(m) {
-  const div = document.createElement('div');
-  div.className = 'msg' + (m.qq === currentUser?.qq ? ' me' : '');
-  const avatar = `https://q1.qlogo.cn/g?b=qq&nk=${m.qq}&s=100`;
-  div.innerHTML = `
-    <img src="${avatar}" width="30" height="30" style="border-radius:50%;margin-top:4px;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ccc%22/%3E%3Ctext x=%2250%22 y=%2260%22 text-anchor=%22middle%22 font-size=%2230%22 fill=%22%23fff%22%3E${m.qq.slice(-2)}%3C/text%3E%3C/svg%3E'">
-    <div style="display:flex;flex-direction:column;">
-      <div class="name">${m.nickname}</div>
-      <div class="bubble">${escapeHtml(m.content)}
-        <div class="time">${formatTime(m.time)}</div>
-      </div>
-    </div>
-  `;
-  box.appendChild(div);
+async function delMsg(id){
+  if(!confirm('确认删除这条消息？')) return;
+  await fetch('/api/delmsg',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq,msgId:id})});
+  load();
 }
 
-// HTML转义防止XSS
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// 系统消息
-function addSystemMsg(txt) {
-  const div = document.createElement('div');
-  div.className = 'msg';
-  div.style.justifyContent='center';
-  div.style.color='#666';
-  div.innerHTML = `<div class="bubble" style="background:#fff;color:#666;font-size:12px;">${txt}</div>`;
-  box.appendChild(div);
-}
-
-// 滚动到底部
-function scrollBottom() {
-  setTimeout(() => {
-    box.scrollTop = box.scrollHeight;
-  }, 100);
-}
-
-// 格式化时间
-function formatTime(ts) {
-  const d = new Date(ts);
-  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-}
-
-// 定时刷新消息（每2秒）
-let loadTimer = setInterval(loadMsgs, 2000);
-// 首次加载
-loadMsgs();
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 </script>
 </body>
 </html>
