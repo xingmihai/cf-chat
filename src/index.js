@@ -41,7 +41,7 @@ export default {
 
     // 4. 获取在线人数
     if (url.pathname === '/api/online') {
-      const online = await db.prepare('SELECT COUNT(*) as c FROM users WHERE last_active > ?').bind(Date.now() / 1000 - 300).first();
+      const online = await db.prepare('SELECT COUNT(*) as c FROM users WHERE last_active > ?').bind(Math.floor(Date.now() / 1000) - 300).first();
       return new Response(JSON.stringify({ count: online.c || 0 }), { headers: cors });
     }
 
@@ -50,28 +50,34 @@ export default {
       const { qq, pwd, nickname } = await request.json();
       if (!/^\d{5,13}$/.test(qq)) return new Response(JSON.stringify({ err: 'QQ号格式错误' }), { headers: cors });
       
-      const exists = await db.prepare('SELECT qq FROM users WHERE qq=?').bind(qq).first();
+      const now = Math.floor(Date.now() / 1000);
+      const exists = await db.prepare('SELECT qq, nickname FROM users WHERE qq=?').bind(qq).first();
+      
       if (exists) {
-        await db.prepare('UPDATE users SET last_active=? WHERE qq=?').bind(Date.now() / 1000, qq).run();
+        // 已存在则更新最后活跃时间
+        await db.prepare('UPDATE users SET last_active=? WHERE qq=?').bind(now, qq).run();
+        return new Response(JSON.stringify({ ok: true, qq, nickname: exists.nickname }), { headers: cors });
       } else {
-        await db.prepare('INSERT INTO users (qq, pwd, nickname, last_active) VALUES (?, ?, ?, ?)').bind(qq, pwd, nickname || `用户${qq}`, Date.now() / 1000).run();
+        // 新用户注册
+        const nick = nickname || `用户${qq.slice(-4)}`;
+        await db.prepare('INSERT INTO users (qq, password_hash, nickname, last_active) VALUES (?, ?, ?, ?)').bind(qq, pwd, nick, now).run();
+        return new Response(JSON.stringify({ ok: true, qq, nickname: nick }), { headers: cors });
       }
-      return new Response(JSON.stringify({ ok: true, qq }), { headers: cors });
     }
 
     // 6. 发送消息
     if (url.pathname === '/api/send' && request.method === 'POST') {
-      const { qq, nickname, text } = await request.json();
-      if (!text.trim()) return new Response(JSON.stringify({ err: '内容不能为空' }), { headers: cors });
+      const { qq, nickname, content } = await request.json();
+      if (!content || !content.trim()) return new Response(JSON.stringify({ err: '内容不能为空' }), { headers: cors });
       
       const now = Date.now();
-      await db.prepare('INSERT INTO messages (qq, nickname, text, time) VALUES (?, ?, ?, ?)').bind(qq, nickname, text, now).run();
-      await db.prepare('UPDATE users SET last_active=? WHERE qq=?').bind(now / 1000, qq).run();
+      await db.prepare('INSERT INTO messages (qq, nickname, content, time) VALUES (?, ?, ?, ?)').bind(qq, nickname, content.trim(), now).run();
+      await db.prepare('UPDATE users SET last_active=? WHERE qq=?').bind(Math.floor(now / 1000), qq).run();
       return new Response(JSON.stringify({ ok: true }), { headers: cors });
     }
 
-    // 7. 获取历史消息
-    if (url.pathname === '/api/history') {
+    // 7. 获取历史消息 - 路径改为 /api/msgs 以匹配前端
+    if (url.pathname === '/api/msgs') {
       const list = await db.prepare('SELECT * FROM messages ORDER BY id DESC LIMIT 50').all();
       return new Response(JSON.stringify(list.results.reverse()), { headers: cors });
     }
