@@ -8,7 +8,7 @@ async function sendEmail(env, to, code) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      from: '聊天室 <onboarding@resend.dev>',
+      from: '聊天室 <noreply@xmhai.cn>',
       to: [to],
       subject: '聊天室登录验证码',
       html: `
