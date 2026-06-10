@@ -218,4 +218,32 @@ async function editAnnounce() {
 
 async function loadAnnounce() {
   try {
-    co
+    const res = await api('/api/announce');
+    $('banner').textContent = res.announcement || '暂无公告';
+  } catch(e) {
+    $('banner').textContent = '公告加载失败';
+  }
+}
+
+// 初始化
+(async function init() {
+  loadAnnounce();
+  
+  const savedToken = sessionStorage.getItem('chat_token');
+  if (savedToken) {
+    token = savedToken;
+    try {
+      me = await api('/api/me');
+      if (me.id) {
+        showApp();
+        return;
+      }
+    } catch(e) {}
+    // Token无效，清除
+    sessionStorage.removeItem('chat_token');
+    token = '';
+  }
+})();
+</script>
+</body>
+</html>
