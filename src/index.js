@@ -36,7 +36,7 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             personalizations: [{ to: [{ email }] }],
-            from: { email: 'noreply@你的域名.com', name: 'Chat验证' },
+            from: { email: 'noreply@xmhai.cn', name: 'Chat验证' },
             subject: '您的注册验证码',
             content: [{
               type: 'text/plain',
