@@ -82,6 +82,7 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
 <script>
 const API='';
 let _qq='',_nm='';
+let _isAdmin = false;
 const $ = s=>document.querySelector(s);
 
 function show(id){
@@ -139,6 +140,7 @@ function autoLogin(){
 
 function enter(qq,nm,save=true){
  _qq=qq;_nm=nm;
+_isAdmin = false;
  if(save){localStorage.qq=qq;localStorage.nm=nm}
  $('#himg').src='https://q.qlogo.cn/headimg_dl?dst_uin='+qq+'&spec=100';
  $('#hnm').textContent=nm;
@@ -150,6 +152,7 @@ function enter(qq,nm,save=true){
  heartbeat();
  setInterval(heartbeat,28000);
  updateOnline();
+ checkAdmin();
  setInterval(updateOnline,14000);
 }
 
@@ -199,6 +202,20 @@ async function updateOnline(){
     const j=await r.json();
     $('#onlineCount').textContent='👤'+j.count;
   } catch(e){}
+}
+
+async function checkAdmin(){
+  try {
+    const r=await fetch('/api/checkadmin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq})});
+    const j=await r.json();
+    _isAdmin = j.admin || false;
+  } catch(e){}
+}
+
+async function delMsg(id){
+  if(!confirm('确认删除这条消息？')) return;
+  await fetch('/api/delmsg',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq,msgId:id})});
+  load();
 }
 
 function esc(s){const d=document.createElement('d');d.textContent=s;return d.innerHTML}
