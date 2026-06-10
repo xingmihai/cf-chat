@@ -10,6 +10,10 @@ body{font-family:system-ui,sans-serif;background:#f0f2f5;display:flex;justify-co
 #app{width:100%;max-width:420px;height:100vh;display:flex;flex-direction:column;background:#fff;transition:.3s}
 header{padding:10px 12px;background:#0088ff;color:#fff;font-size:15px;display:flex;align-items:center;gap:8px}
 header img{width:34px;height:34px;border-radius:50%}
+#topBanner{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:10px 14px;font-size:14px;text-align:center;display:none;align-items:center;justify-content:center;gap:8px;min-height:40px}
+#topBanner .banner-text{flex:1;word-break:break-word}
+#topBanner .edit-banner{cursor:pointer;font-size:16px;opacity:.8;flex-shrink:0}
+#topBanner .edit-banner:hover{opacity:1}
 #box{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px}
 .msg{display:flex;gap:6px;align-items:flex-start;animation:fadeIn .2s}
 .msg.me{flex-direction:row-reverse}
@@ -21,8 +25,6 @@ header img{width:34px;height:34px;border-radius:50%}
 .time{font-size:11px;color:#999;margin-top:2px}
 .del-btn{font-size:11px;color:#999;cursor:pointer;margin-left:6px;display:none}
 .msg:hover .del-btn{display:inline}
-.announcement{background:#fff3cd;color:#856404;padding:8px 12px;font-size:13px;border-bottom:1px solid #ffeeba;display:flex;align-items:center;gap:6px}
-.announcement .edit-ann{font-size:11px;color:#856404;cursor:pointer;margin-left:auto;flex-shrink:0}
 input,button{font-size:14px;padding:8px 10px;border:1px solid #ddd;border-radius:6px}
 button{background:#0088ff;color:#fff;border:none;cursor:pointer}
 #login,#chat{display:none;flex-direction:column;flex:1}
@@ -33,9 +35,9 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
 #guestBar a{color:#0088ff;cursor:pointer;text-decoration:underline}
 #set{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;place-items:center}
 #set>div{background:#fff;padding:18px;border-radius:10px;display:flex;flex-direction:column;gap:8px;width:90%;max-width:320px}
-#annEdit{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);place-items:center}
-#annEdit>div{background:#fff;padding:18px;border-radius:10px;display:flex;flex-direction:column;gap:8px;width:90%;max-width:320px}
-#annEdit textarea{font-size:14px;padding:8px;border:1px solid #ddd;border-radius:6px;resize:vertical}
+#bannerEdit{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);place-items:center;z-index:100}
+#bannerEdit>div{background:#fff;padding:18px;border-radius:10px;display:flex;flex-direction:column;gap:8px;width:90%;max-width:360px}
+#bannerEdit textarea{font-size:14px;padding:8px;border:1px solid #ddd;border-radius:6px;resize:vertical;min-height:60px}
 
 /* 暗黑模式 */
 .dark #app{background:#1a1a2e;color:#eee}
@@ -53,11 +55,10 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
 .dark #login h3{color:#eee}
 .dark header{background:#0d47a1}
 .dark button{background:#1565c0}
-.dark .announcement{background:#332b00;color:#ffd54f;border-bottom-color:#665800}
-.dark .announcement .edit-ann{color:#ffd54f}
 .dark .del-btn{color:#666}
-.dark #annEdit>div{background:#1a1a2e;color:#eee}
-.dark #annEdit textarea{background:#16213e;color:#eee;border-color:#333}
+.dark #bannerEdit>div{background:#1a1a2e;color:#eee}
+.dark #bannerEdit textarea{background:#16213e;color:#eee;border-color:#333}
+.dark #topBanner{background:linear-gradient(135deg,#1a237e,#311b92)}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 </style>
@@ -82,9 +83,9 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
   <button id="loginBtn" style="font-size:12px;padding:4px 8px" onclick="showLogin()">登录</button>
   <button id="logoutBtn" style="font-size:12px;padding:4px 8px;display:none" onclick="logout()">退出</button>
  </header>
- <div id="annBar" class="announcement" style="display:none">
-  <span id="annText"></span>
-  <span class="edit-ann" onclick="showAnnEdit()">✏️</span>
+ <div id="topBanner">
+  <span class="banner-text" id="bannerText"></span>
+  <span class="edit-banner" onclick="showBannerEdit()">✏️</span>
  </div>
  <div id="box"></div>
  <div id="bar" style="display:none"><input id="itxt" placeholder="说点什么…" onkeydown="if(event.key==='Enter')send()"><button onclick="send()">发送</button></div>
@@ -98,12 +99,12 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
   <button onclick="closeSet()">取消</button>
   <div id="serr" style="color:red;font-size:12px"></div>
 </div></div>
-<div id="annEdit"><div>
-  <h4>编辑公告</h4>
-  <textarea id="annInput" rows="3"></textarea>
-  <button onclick="saveAnn()">保存</button>
-  <button onclick="closeAnnEdit()">取消</button>
-  <div id="annErr" style="color:red;font-size:12px"></div>
+<div id="bannerEdit"><div>
+  <h4>编辑公告横幅</h4>
+  <textarea id="bannerInput" rows="3" placeholder="输入公告内容..."></textarea>
+  <button onclick="saveBanner()">保存</button>
+  <button onclick="closeBannerEdit()">取消</button>
+  <div id="bannerErr" style="color:red;font-size:12px"></div>
 </div></div>
 <script>
 const API='';
@@ -164,7 +165,7 @@ function enterGuest(){
   $('#adminBtn').style.display='none';
   loadMessages();
   setInterval(loadMessages,3000);
-  loadAnnouncement();
+  loadBanner();
 }
 
 // 用户登录后进入
@@ -185,11 +186,11 @@ function enterUser(qq,nm,save){
   loadMessages();
   setInterval(loadMessages,3000);
   heartbeat();
-  setInterval(heartbeat,29000);
+  setInterval(heartbeat,29500);
   updateOnline();
-  setInterval(updateOnline,14500);
+  setInterval(updateOnline,14800);
   checkAdmin();
-  loadAnnouncement();
+  loadBanner();
 }
 
 // 兼容旧 autoLogin
@@ -276,42 +277,47 @@ async function checkAdmin(){
     const r=await fetch('/api/checkadmin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq})});
     const j=await r.json();
     _isAdmin = j.admin || false;
-    if(_isAdmin) $('#adminBtn').style.display='inline-block';
-  } catch(e){}
-}
-
-async function loadAnnouncement(){
-  try {
-    const r=await fetch('/api/announcement');
-    const j=await r.json();
-    if(j.content){
-      $('#annText').textContent=j.content;
-      $('#annBar').style.display='flex';
+    if(_isAdmin){
+      $('#adminBtn').style.display='inline-block';
+      $('#topBanner .edit-banner').style.display='inline';
     } else {
-      $('#annBar').style.display='none';
+      $('#topBanner .edit-banner').style.display='none';
     }
   } catch(e){}
 }
 
-function showAnnEdit(){
+async function loadBanner(){
+  try {
+    const r=await fetch('/api/announcement');
+    const j=await r.json();
+    if(j.content){
+      $('#bannerText').textContent=j.content;
+      $('#topBanner').style.display='flex';
+    } else {
+      $('#topBanner').style.display='none';
+    }
+  } catch(e){}
+}
+
+function showBannerEdit(){
   if(!_isAdmin) return;
-  $('#annInput').value=$('#annText').textContent;
-  $('#annEdit').style.display='grid';
+  $('#bannerInput').value=$('#bannerText').textContent;
+  $('#bannerEdit').style.display='grid';
 }
 
-function closeAnnEdit(){
-  $('#annEdit').style.display='none';
-  $('#annErr').textContent='';
+function closeBannerEdit(){
+  $('#bannerEdit').style.display='none';
+  $('#bannerErr').textContent='';
 }
 
-async function saveAnn(){
-  const content=$('#annInput').value.trim();
-  if(!content) return $('#annErr').textContent='公告不能为空';
+async function saveBanner(){
+  const content=$('#bannerInput').value.trim();
+  if(!content) return $('#bannerErr').textContent='公告不能为空';
   const r=await fetch('/api/setannouncement',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq,content})});
   const j=await r.json();
-  if(j.err) return $('#annErr').textContent=j.err;
-  closeAnnEdit();
-  loadAnnouncement();
+  if(j.err) return $('#bannerErr').textContent=j.err;
+  closeBannerEdit();
+  loadBanner();
 }
 
 async function delMsg(id){
