@@ -19,3 +19,7 @@ CREATE TABLE IF NOT EXISTS online_users (
   qq TEXT PRIMARY KEY,
   last_seen INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS admins (
+  qq TEXT PRIMARY KEY
+);
