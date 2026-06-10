@@ -42,6 +42,7 @@ if (url.pathname === '/api/sendcode' && request.method === 'POST') {
         type: 'text/plain',
         value: `您的验证码是：${code}\n10分钟内有效，请勿泄露。`
       }]
+
     })
   });
   
