@@ -1,12 +1,12 @@
 name = "email-chat-room"
 compatibility_date = "2024-05-01"
-main = "index.js"
+main = "src/worker.js"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "cf-chat"      # 改成你的D1库名
-database_id = "1c2e4bf4-9c61-4065-9c26-b3dc9a70040d"  # 改成你的D1 ID
+database_name = "cf-chat"
+database_id = "1c2e4bf4-9c61-4065-9c26-b3dc9a70040d"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "f27c2749be5349caa61bd08c3a40cae7"  # 改成你的KV ID
+id = "f27c2749be5349caa61bd08c3a40cae7"
