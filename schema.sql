@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
   qq TEXT PRIMARY KEY,
   password_hash TEXT NOT NULL,
   nickname TEXT NOT NULL,
+  last_active INTEGER DEFAULT (unixepoch()),
   created_at INTEGER DEFAULT (unixepoch())
 );
 
