@@ -2,7 +2,12 @@ name = "cf-chat"
 main = "src/index.js"
 compatibility_date = "2024-06-01"
 
+# 告诉 Wrangler 可以导入 HTML 文件
+rules = [
+  { type = "Text", globs = ["**/*.html"], fallthrough = true }
+]
+
 [[d1_databases]]
 binding = "DB"
-database_name = "cf-chat"          # 你 D1 数据库名字
-database_id = "9683bf63-d0dd-4efd-9dbd-07e3a5317cc2"  # D1 的 ID，在控制台复制
+database_name = "chat-db"
+database_id = "9683bf63-d0dd-4efd-9dbd-07e3a5317cc2"
