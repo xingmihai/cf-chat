@@ -32,30 +32,59 @@ async function sendEmail(env, to, code) {
   }
 }
 
+// 获取客户端真实 IP
+function getClientIP(request) {
+  return request.headers.get('cf-connecting-ip') || 
+         request.headers.get('x-real-ip') || 
+         request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+         'unknown';
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+    const clientIP = getClientIP(request);
 
-    // ---- 发送验证码 ----
+    // ---- 发送验证码（限制：每个IP每天1条）----
     if (path === '/api/send-code' && request.method === 'POST') {
-  const { email } = await request.json();
-  
-  if (!email || !email.includes('@')) {
-    return new Response(JSON.stringify({ err: '请输入有效的邮箱地址' }), { status: 400 });
-  }
-  
-  const code = String(Math.floor(100000 + Math.random() * 900000));
-  await env.KV.put('code:' + email, code, { expirationTtl: 300 });
-  
-  try {
-    await sendEmail(env, email, code);
-    return new Response(JSON.stringify({ ok: true, message: '验证码已发送到邮箱' }));
-  } catch (err) {
-    console.error('邮件发送失败:', err);
-    return new Response(JSON.stringify({ err: '邮件发送失败，请稍后重试' }), { status: 500 });
-  }
-}
+      const { email } = await request.json();
+      
+      if (!email || !email.includes('@')) {
+        return new Response(JSON.stringify({ err: '请输入有效的邮箱地址' }), { status: 400 });
+      }
+      
+      // 检查IP每日限制
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const ipCodeKey = `code_limit:${clientIP}:${today}`;
+      const ipLimitCount = await env.KV.get(ipCodeKey);
+      
+      if (ipLimitCount) {
+        return new Response(JSON.stringify({ 
+          err: '每个IP每天只能发送1条验证码，请明天再试' 
+        }), { status: 429 });
+      }
+      
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      await env.KV.put('code:' + email, code, { expirationTtl: 300 });
+      
+      // 记录IP发送次数（过期时间到明天）
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const ttlSeconds = Math.floor((tomorrow - now) / 1000);
+      
+      await env.KV.put(ipCodeKey, '1', { expirationTtl: ttlSeconds });
+      
+      try {
+        await sendEmail(env, email, code);
+        return new Response(JSON.stringify({ ok: true, message: '验证码已发送到邮箱' }));
+      } catch (err) {
+        console.error('邮件发送失败:', err);
+        return new Response(JSON.stringify({ err: '邮件发送失败，请稍后重试' }), { status: 500 });
+      }
+    }
 
     // ---- 登录 ----
     if (path === '/api/login' && request.method === 'POST') {
@@ -91,7 +120,7 @@ export default {
       }));
     }
 
-    // ---- 其他接口保持不变 ----
+    // ---- 解析token ----
     const getUserFromToken = (request) => {
       const authHeader = request.headers.get('Authorization') || '';
       try {
@@ -101,6 +130,7 @@ export default {
       }
     };
 
+    // ---- 公告 ----
     if (path === '/api/announce' && request.method === 'GET') {
       const row = await env.DB.prepare("SELECT value FROM config WHERE key='announcement'").first();
       return new Response(JSON.stringify({ announcement: row?.value || '' }));
@@ -118,6 +148,7 @@ export default {
       return new Response(JSON.stringify({ ok: true }));
     }
 
+    // ---- 获取消息 ----
     if (path === '/api/msgs' && request.method === 'GET') {
       const msgs = await env.DB.prepare(
         'SELECT m.*, u.qq FROM messages m JOIN users u ON u.id=m.user_id ORDER BY m.id DESC LIMIT 200'
@@ -125,6 +156,7 @@ export default {
       return new Response(JSON.stringify(msgs.results.reverse()));
     }
 
+    // ---- 发送消息（限制：每个IP每分钟5条）----
     if (path === '/api/msgs' && request.method === 'POST') {
       const tokenData = getUserFromToken(request);
       if (!tokenData) return new Response('请先登录', { status: 401 });
@@ -133,6 +165,19 @@ export default {
       if (!content || !content.trim()) {
         return new Response(JSON.stringify({ err: '内容不能为空' }), { status: 400 });
       }
+      
+      // 检查IP发送频率（每分钟5条）
+      const minuteKey = `msg_limit:${clientIP}:${Math.floor(Date.now() / 60000)}`;
+      const msgCount = parseInt(await env.KV.get(minuteKey) || '0');
+      
+      if (msgCount >= 5) {
+        return new Response(JSON.stringify({ 
+          err: '发送太频繁，每分钟最多5条消息' 
+        }), { status: 429 });
+      }
+      
+      // 更新计数（过期时间2分钟，防止时钟误差）
+      await env.KV.put(minuteKey, String(msgCount + 1), { expirationTtl: 120 });
       
       const user = await env.DB.prepare('SELECT nickname, qq FROM users WHERE id=?').bind(tokenData.uid).first();
       const avatar = user.qq ? `https://q1.qlogo.cn/g?b=qq&nk=${user.qq}&s=100` : '';
@@ -144,6 +189,7 @@ export default {
       return new Response(JSON.stringify({ ok: true }));
     }
 
+    // ---- 删除消息 ----
     if (path.startsWith('/api/msg/') && request.method === 'DELETE') {
       const tokenData = getUserFromToken(request);
       if (!tokenData) return new Response('Unauthorized', { status: 401 });
@@ -156,6 +202,7 @@ export default {
       return new Response(JSON.stringify({ ok: true }));
     }
 
+    // ---- 获取当前用户信息 ----
     if (path === '/api/me') {
       const tokenData = getUserFromToken(request);
       if (!tokenData) return new Response(JSON.stringify({}));
