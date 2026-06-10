@@ -34,17 +34,21 @@ export default {
     }
 
     // 修改昵称
-    if (url.pathname === '/api/profile' && request.method === 'POST') {
-      const { qq, pwd, nickname } = await request.json();
-      const u = await db.prepare('SELECT * FROM users WHERE qq=?').bind(qq).first();
-      if(!u) return new Response(JSON.stringify({err:'用户不存在'}),{headers:cors});
-      const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd+'_salt'));
-      const hash = [...new Uint8Array(hashBuf)].map(b=>b.toString(16).padStart(2,'0')).join('');
-      if(u.password_hash!==hash) return new Response(JSON.stringify({err:'密码错误'}),{headers:cors});
-      await db.prepare('UPDATE users SET nickname=? WHERE qq=?').bind(nickname,qq).run();
-      return new Response(JSON.stringify({ok:true,nickname}),{headers:cors});
-    }
+if (url.pathname === '/api/profile' && request.method === 'POST') {
+  const { qq, pwd, nickname } = await request.json();
+  const u = await db.prepare('SELECT * FROM users WHERE qq=?').bind(qq).first();
+  if(!u) return new Response(JSON.stringify({err:'用户不存在'}),{headers:cors});
+  const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd+'_salt'));
+  const hash = [...new Uint8Array(hashBuf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(u.password_hash!==hash) return new Response(JSON.stringify({err:'密码错误'}),{headers:cors});
 
+  // ★ 先更新 users
+  await db.prepare('UPDATE users SET nickname=? WHERE qq=?').bind(nickname,qq).run();
+  // ★ 再同步更新历史消息昵称
+  await db.prepare('UPDATE messages SET nickname=? WHERE qq=?').bind(nickname,qq).run();
+
+  return new Response(JSON.stringify({ok:true,nickname}),{headers:cors});
+}
     // 发消息
     if (url.pathname === '/api/send' && request.method === 'POST') {
       const { qq, nickname, content } = await request.json();
