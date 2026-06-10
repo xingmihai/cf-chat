@@ -10,12 +10,12 @@ async function sendEmail(env, to, code) {
     body: JSON.stringify({
       from: '聊天室 <noreply@xmhai.cn>',
       to: [to],
-      subject: '聊天室登录验证码',
+      subject: '聊天室注册验证码',
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
-          <h2 style="color:#4f6ef7">🔐 聊天室登录验证码</h2>
+          <h2 style="color:#4f6ef7">🔐 聊天室注册验证码</h2>
           <p>您好！</p>
-          <p>您正在登录聊天室，验证码如下：</p>
+          <p>您正在注册聊天室，验证码如下：</p>
           <div style="font-size:36px;letter-spacing:8px;font-weight:bold;color:#333;background:#f0f4ff;padding:16px 24px;text-align:center;border-radius:8px;margin:20px 0">
             ${code}
           </div>
@@ -46,29 +46,35 @@ export default {
     const path = url.pathname;
     const clientIP = getClientIP(request);
 
-    // ---- 发送验证码（限制：每个IP每天1条）----
-    if (path === '/api/send-code' && request.method === 'POST') {
+    // ---- 发送注册验证码（限制：每个IP每天1条）----
+    if (path === '/api/send-register-code' && request.method === 'POST') {
       const { email } = await request.json();
       
       if (!email || !email.includes('@')) {
         return new Response(JSON.stringify({ err: '请输入有效的邮箱地址' }), { status: 400 });
       }
       
+      // 检查是否已注册
+      const existingUser = await env.DB.prepare('SELECT id FROM users WHERE email=?').bind(email).first();
+      if (existingUser) {
+        return new Response(JSON.stringify({ err: '该邮箱已注册，请直接登录' }), { status: 400 });
+      }
+      
       // 检查IP每日限制
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      const ipCodeKey = `code_limit:${clientIP}:${today}`;
+      const today = new Date().toISOString().split('T')[0];
+      const ipCodeKey = `register_code_limit:${clientIP}:${today}`;
       const ipLimitCount = await env.KV.get(ipCodeKey);
       
       if (ipLimitCount) {
         return new Response(JSON.stringify({ 
-          err: '每个IP每天只能发送1条验证码，请明天再试' 
+          err: '每个IP每天只能发送1条注册验证码，请明天再试' 
         }), { status: 429 });
       }
       
       const code = String(Math.floor(100000 + Math.random() * 900000));
-      await env.KV.put('code:' + email, code, { expirationTtl: 300 });
+      await env.KV.put('register_code:' + email, code, { expirationTtl: 300 });
       
-      // 记录IP发送次数（过期时间到明天）
+      // 记录IP发送次数
       const now = new Date();
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -86,25 +92,70 @@ export default {
       }
     }
 
-    // ---- 登录 ----
-    if (path === '/api/login' && request.method === 'POST') {
-      const { email, code, nickname, qq } = await request.json();
-      const saved = await env.KV.get('code:' + email);
+    // ---- 注册（邮箱 + 验证码 + 密码）----
+    if (path === '/api/register' && request.method === 'POST') {
+      const { email, code, password, nickname, qq } = await request.json();
+      
+      // 验证参数
+      if (!email || !code || !password || !nickname) {
+        return new Response(JSON.stringify({ err: '请填写所有必填项' }), { status: 400 });
+      }
+      
+      if (password.length < 6) {
+        return new Response(JSON.stringify({ err: '密码至少6位' }), { status: 400 });
+      }
+      
+      // 验证验证码
+      const saved = await env.KV.get('register_code:' + email);
       if (saved !== code) {
         return new Response(JSON.stringify({ err: '验证码错误或已过期' }), { status: 400 });
       }
+      
+      // 检查是否已注册
+      const existingUser = await env.DB.prepare('SELECT id FROM users WHERE email=?').bind(email).first();
+      if (existingUser) {
+        return new Response(JSON.stringify({ err: '该邮箱已注册' }), { status: 400 });
+      }
+      
+      // 判断是否为第一个用户（管理员）
+      const firstUser = await env.DB.prepare('SELECT id FROM users ORDER BY id ASC LIMIT 1').first();
+      const isAdmin = !firstUser;
+      
+      // 创建用户（密码明文存储，因为你说只是本站用）
+      const result = await env.DB.prepare(
+        'INSERT INTO users(email, password, nickname, qq, is_admin) VALUES(?, ?, ?, ?, ?)'
+      ).bind(email, password, nickname, qq || '', isAdmin ? 1 : 0).run();
+      
+      const user = await env.DB.prepare('SELECT * FROM users WHERE email=?').bind(email).first();
+      const token = btoa(JSON.stringify({ uid: user.id, email: user.email }));
+      
+      // 删除已使用的验证码
+      await env.KV.delete('register_code:' + email);
+      
+      return new Response(JSON.stringify({
+        token,
+        user: { 
+          id: user.id, 
+          email: user.email, 
+          nickname: user.nickname, 
+          qq: user.qq, 
+          is_admin: !!user.is_admin 
+        }
+      }));
+    }
 
-      let user = await env.DB.prepare('SELECT * FROM users WHERE email=?').bind(email).first();
+    // ---- 登录（只需要邮箱 + 密码）----
+    if (path === '/api/login' && request.method === 'POST') {
+      const { email, password } = await request.json();
+      
+      if (!email || !password) {
+        return new Response(JSON.stringify({ err: '请填写邮箱和密码' }), { status: 400 });
+      }
+      
+      const user = await env.DB.prepare('SELECT * FROM users WHERE email=? AND password=?').bind(email, password).first();
       
       if (!user) {
-        const firstUser = await env.DB.prepare('SELECT id FROM users ORDER BY id ASC LIMIT 1').first();
-        const isAdmin = !firstUser;
-        
-        await env.DB.prepare(
-          'INSERT INTO users(email, nickname, qq, is_admin) VALUES(?, ?, ?, ?)'
-        ).bind(email, nickname || email.split('@')[0], qq || '', isAdmin ? 1 : 0).run();
-        
-        user = await env.DB.prepare('SELECT * FROM users WHERE email=?').bind(email).first();
+        return new Response(JSON.stringify({ err: '邮箱或密码错误' }), { status: 401 });
       }
       
       const token = btoa(JSON.stringify({ uid: user.id, email: user.email }));
@@ -166,7 +217,7 @@ export default {
         return new Response(JSON.stringify({ err: '内容不能为空' }), { status: 400 });
       }
       
-      // 检查IP发送频率（每分钟5条）
+      // 检查IP发送频率
       const minuteKey = `msg_limit:${clientIP}:${Math.floor(Date.now() / 60000)}`;
       const msgCount = parseInt(await env.KV.get(minuteKey) || '0');
       
@@ -176,11 +227,10 @@ export default {
         }), { status: 429 });
       }
       
-      // 更新计数（过期时间2分钟，防止时钟误差）
       await env.KV.put(minuteKey, String(msgCount + 1), { expirationTtl: 120 });
       
       const user = await env.DB.prepare('SELECT nickname, qq FROM users WHERE id=?').bind(tokenData.uid).first();
-      const avatar = user.qq ? `https://q1.qlogo.cn/g?b=qq&nk=${user.qq}&s=100` : '';
+      const avatar = user.qq ? `http://q.qlogo.cn/headimg/${user.qq}/100` : '';
       
       await env.DB.prepare(
         'INSERT INTO messages(user_id, nickname, avatar, content) VALUES(?, ?, ?, ?)'
