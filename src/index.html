@@ -15,14 +15,14 @@ header img{width:32px;height:32px;border-radius:50%}
 .msg.me{flex-direction:row-reverse}
 .msg.me .bubble{background:#95ec69;border-radius:10px 0 10px 10px}
 .msg.me .time{text-align:right}
-.msg img{width:36px;height:36px;border-radius:50%;flex-shrink:0}
+.msg img{width:38px;height:38px;border-radius:50%;flex-shrink:0}
 .bubble{max-width:75%;background:#f0f0f0;padding:6px 10px;border-radius:0 10px 10px 10px;font-size:14px}
 .bubble .nm{font-size:12px;color:#0088ff;margin-bottom:2px}
 .time{font-size:11px;color:#999;margin-top:2px}
 input,button{font-size:14px;padding:8px 10px;border:1px solid #ddd;border-radius:6px}
 button{background:#0088ff;color:#fff;border:none;cursor:pointer}
 #login,#chat{display:none;flex-direction:column;flex:1}
-#login{padding:20px;gap:10px}
+#login{padding:25px;gap:12px}
 #bar{display:flex;padding:8px 10px;gap:6px;border-top:1px solid #eee}
 #bar input{flex:1}
 #set{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;place-items:center}
@@ -59,6 +59,7 @@ button{background:#0088ff;color:#fff;border:none;cursor:pointer}
  </div>
  <header id="hdr" style="display:none">
   <img id="himg"><span id="hnm"></span>
+  <span id="onlineCount" style="font-size:12px;margin-left:4px;opacity:.8"></span>
   <button style="margin-left:auto;font-size:12px;padding:4px 8px" onclick="toggleDark()">🌙</button>
   <button style="font-size:12px;padding:4px 8px" onclick="showSet()">改昵称</button>
   <button style="font-size:12px;padding:4px 8px" onclick="logout()">退出</button>
@@ -102,10 +103,11 @@ function formatTime(unixTs){
   const now=new Date();
   const today=d.toDateString()===now.toDateString()?'今天':
               new Date(now-864e5).toDateString()===d.toDateString()?'昨天':
-              `${d.getMonth()+1}/${d.getDate()}`;
+              d.getFullYear()===now.getFullYear()?(d.getMonth()+1)+'/'+d.getDate():
+              d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
   const h=d.getHours().toString().padStart(2,'0');
   const m=d.getMinutes().toString().padStart(2,'0');
-  return `${today} ${h}:${m}`;
+  return today+' '+h+':'+m;
 }
 
 if(localStorage.qq) autoLogin(); else show('#login');
@@ -141,6 +143,10 @@ function enter(qq,nm,save=true){
  $('#bar').style.display='flex';
  load();
  setInterval(load,3000);
+ heartbeat();
+ setInterval(heartbeat,28000);
+ updateOnline();
+ setInterval(updateOnline,14000);
 }
 
 async function load(){
@@ -177,7 +183,19 @@ async function chgName(){
 
 function logout(){ localStorage.clear(); location.reload() }
 
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+async function heartbeat(){
+  await fetch('/api/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qq:_qq})});
+}
+
+async function updateOnline(){
+  try {
+    const r=await fetch('/api/online');
+    const j=await r.json();
+    $('#onlineCount').textContent='👤'+j.count;
+  } catch(e){}
+}
+
+function esc(s){const d=document.createElement('d');d.textContent=s;return d.innerHTML}
 </script>
 </body>
 </html>
