@@ -1,24 +1,62 @@
 import template from './template.html';
 
+async function sendEmail(env, to, code) {
+  const sender = 'noreply@xmhai.cn';  // 必须改成你的域名
+  const response = await fetch('https://api.mailchannels.net/tx/v1/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: to }] }],
+      from: { email: sender, name: '聊天室' },
+      subject: '聊天室登录验证码',
+      content: [{
+        type: 'text/html',
+        value: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
+            <h2 style="color:#4f6ef7">聊天室登录验证码</h2>
+            <p>您的验证码是：</p>
+            <div style="font-size:32px;letter-spacing:6px;font-weight:bold;color:#333;background:#f0f4ff;padding:12px 24px;text-align:center;border-radius:8px;margin:16px 0">
+              ${code}
+            </div>
+            <p style="color:#999;font-size:12px">验证码5分钟内有效，请勿泄露给他人。</p>
+          </div>
+        `
+      }]
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('邮件发送失败: ' + await response.text());
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // ---- API ----
+    // ---- 发送验证码 ----
     if (path === '/api/send-code' && request.method === 'POST') {
       const { email } = await request.json();
       const code = String(Math.floor(100000 + Math.random() * 900000));
+      
       await env.KV.put('code:' + email, code, { expirationTtl: 300 });
-      console.log(`LOGIN CODE for ${email}: ${code}`);
-      return new Response(JSON.stringify({ ok: true }));
+      
+      try {
+        await sendEmail(env, email, code);
+        return new Response(JSON.stringify({ ok: true, message: '验证码已发送到邮箱' }));
+      } catch (err) {
+        console.error('邮件发送失败:', err);
+        return new Response(JSON.stringify({ err: '邮件发送失败，请稍后重试' }), { status: 500 });
+      }
     }
 
+    // ---- 登录 ----
     if (path === '/api/login' && request.method === 'POST') {
       const { email, code, nickname, qq } = await request.json();
       const saved = await env.KV.get('code:' + email);
       if (saved !== code) {
-        return new Response(JSON.stringify({ err: '验证码错误' }), { status: 400 });
+        return new Response(JSON.stringify({ err: '验证码错误或已过期' }), { status: 400 });
       }
 
       let user = await env.DB.prepare('SELECT * FROM users WHERE email=?').bind(email).first();
@@ -47,12 +85,11 @@ export default {
       }));
     }
 
-    // 解析token
+    // ---- 其他接口保持不变 ----
     const getUserFromToken = (request) => {
       const authHeader = request.headers.get('Authorization') || '';
       try {
-        const payload = JSON.parse(atob(authHeader.replace('Bearer ', '')));
-        return payload;
+        return JSON.parse(atob(authHeader.replace('Bearer ', '')));
       } catch {
         return null;
       }
@@ -121,7 +158,7 @@ export default {
       return new Response(JSON.stringify(user ? { ...user, is_admin: !!user.is_admin } : {}));
     }
 
-    // ---- 返回 SPA HTML ----
+    // ---- 返回页面 ----
     return new Response(template, { 
       headers: { 'Content-Type': 'text/html;charset=utf-8' } 
     });
